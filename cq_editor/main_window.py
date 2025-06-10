@@ -1,3 +1,4 @@
+# 负责GUI构造和交互界面
 import sys
 
 from PyQt5.QtCore import QObject, pyqtSignal
@@ -131,62 +132,89 @@ class MainWindow(QMainWindow, MainMixin):
 
     def preferencesChanged(self, param, changes):
         """
-        Triggered when the preferences for this window are changed.
+        当此窗口的偏好设置发生变化时触发此方法。
+
+        :param param: 发生变化的偏好设置参数对象，当前方法未使用该参数。
+        :param changes: 包含偏好设置变化信息的对象，当前方法未使用该参数。
         """
 
-        # Use the default light theme/palette
+        # 根据“Light/Dark Theme”偏好设置切换主题
+        # 使用默认的浅色主题/调色板
         if self.preferences["Light/Dark Theme"] == "Light":
+            # 清除自定义样式表，恢复默认样式
             QApplication.instance().setStyleSheet("")
+            # 设置应用程序使用标准调色板
             QApplication.instance().setPalette(QApplication.style().standardPalette())
 
-            # The console theme needs to be changed separately
+            # 控制台主题需要单独更改
             self.components["console"].app_theme_changed("Light")
-        # Use the dark theme/palette
+        # 使用深色主题/调色板
         elif self.preferences["Light/Dark Theme"] == "Dark":
+            # 设置应用程序使用“Fusion”样式表，这是一个深色主题的样式表
             QApplication.instance().setStyle("Fusion")
 
-            # Now use a palette to switch to dark colors:
+            # 设置自定义深色主题/调色板
             white_color = QColor(255, 255, 255)
             black_color = QColor(0, 0, 0)
             red_color = QColor(255, 0, 0)
             palette = QPalette()
+            # 设置调色板的各个颜色
             palette.setColor(QPalette.Window, QColor(53, 53, 53))
+            # 设置窗口文本颜色为白色
             palette.setColor(QPalette.WindowText, white_color)
+            # 设置基础控件背景颜色为深灰色
             palette.setColor(QPalette.Base, QColor(25, 25, 25))
+            # 设置交替基础控件的背景颜色为深灰色
             palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+            # 设置工具提示的背景颜色为深灰色
             palette.setColor(QPalette.ToolTipBase, black_color)
+            # 设置工具提示文本颜色为白色
             palette.setColor(QPalette.ToolTipText, white_color)
+            # 设置普通文本颜色为白色
             palette.setColor(QPalette.Text, white_color)
+            # 设置按钮的颜色为深灰色
             palette.setColor(QPalette.Button, QColor(53, 53, 53))
+            # 设置按钮文本颜色为白色
             palette.setColor(QPalette.ButtonText, white_color)
+            # 设置高亮的文本颜色为红色
             palette.setColor(QPalette.BrightText, red_color)
+            # 设置链接的颜色为蓝色
             palette.setColor(QPalette.Link, QColor(42, 130, 218))
+            # 设置选中区域背景颜色为蓝色
             palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+            # 设置选中区域文本颜色为白色
             palette.setColor(QPalette.HighlightedText, black_color)
+            # 设置应用程序的调色板
             QApplication.instance().setPalette(palette)
 
-            # The console theme needs to be changed separately
+            # 控制台主题需要单独更改
             self.components["console"].app_theme_changed("Dark")
 
-        # We alter the color of the toolbar separately to avoid having separate dark theme icons
+        # 单独调整工具栏的颜色，避免使用单独的深色主题图标
         p = self.toolbar.palette()
         if self.preferences["Light/Dark Theme"] == "Dark":
+            # 设置工具栏的背景颜色为深灰色
             p.setColor(QPalette.Background, QColor(120, 120, 120))
 
-            # TWeak the QMenu items palette for dark theme
+            # 微调深色主题下的QMenu项的调色板
             menu_palette = self.menuBar().palette()
+            # 设置菜单的背景颜色为深灰色
             menu_palette.setColor(QPalette.Base, QColor(80, 80, 80))
+            # 为菜单栏下所有QMenu应用新的调色板
             for menu in self.menuBar().findChildren(QMenu):
                 menu.setPalette(menu_palette)
         else:
+            # 设置浅色主题下工具栏的背景颜色
             p.setColor(QPalette.Background, QColor(240, 240, 240))
 
-            # Revert the QMenu items palette for dark theme
+            # 恢复QMenu项的调色板为浅色主题
             menu_palette = self.menuBar().palette()
+            # 设置QMenu项的基础背景颜色为浅色
             menu_palette.setColor(QPalette.Base, QColor(240, 240, 240))
+            # 
             for menu in self.menuBar().findChildren(QMenu):
                 menu.setPalette(menu_palette)
-
+        # 为工具栏应用新的调色板
         self.toolbar.setPalette(p)
 
     def closeEvent(self, event):

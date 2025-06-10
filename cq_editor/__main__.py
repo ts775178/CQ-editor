@@ -1,3 +1,4 @@
+# __main__.py负责程序主逻辑
 import sys
 import argparse
 

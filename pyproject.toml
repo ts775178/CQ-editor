@@ -30,7 +30,7 @@ classifiers = [
   "Programming Language :: Python"
 ]
 
-[project.scripts]
+[project.scripts] # 这意味着我可以直接在命令行中输入CQ-editor直接运行
 CQ-editor = "cq_editor.cqe_run:main"
 
 [project.optional-dependencies]
