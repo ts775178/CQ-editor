@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import (
 from logbook import Logger
 import cadquery as cq
 
+# 导入自定义组件
 from .widgets.editor import Editor
 from .widgets.viewer import OCCViewer
 from .widgets.console import ConsoleWidget
@@ -40,32 +41,46 @@ from .preferences import PreferencesWidget
 
 
 class _PrintRedirectorSingleton(QObject):
-    """This class monkey-patches `sys.stdout.write` to emit a signal.
-    It is instanciated as `.main_window.PRINT_REDIRECTOR` and should not be instanciated again.
+    """这个类通过monkey-patch方式重定向sys.stdout.write，使其发出信号。
+    它被实例化为.main_window.PRINT_REDIRECTOR，不应该再次实例化。
+    这样做的目的是将标准输出重定向到GUI界面的日志窗口中。
     """
 
-    sigStdoutWrite = pyqtSignal(str)
+    sigStdoutWrite = pyqtSignal(str)  # 定义信号，用于传递标准输出文本
 
     def __init__(self):
         super().__init__()
 
+        # 保存原始的stdout.write函数
         original_stdout_write = sys.stdout.write
 
         def new_stdout_write(text: str):
-            self.sigStdoutWrite.emit(text)
-            return original_stdout_write(text)
+            """重定向stdout.write的新实现
+            Args:
+                text: 要输出的文本
+            Returns:
+                调用原始stdout.write的结果
+            """
+            self.sigStdoutWrite.emit(text)  # 发出信号
+            return original_stdout_write(text)  # 调用原始函数
 
+        # 替换sys.stdout.write
         sys.stdout.write = new_stdout_write
 
 
+# 创建全局单例实例
 PRINT_REDIRECTOR = _PrintRedirectorSingleton()
 
 
 class MainWindow(QMainWindow, MainMixin):
+    """主窗口类，继承自QMainWindow和MainMixin
+    负责整个应用程序的主界面布局和功能组织
+    """
 
-    name = "CQ-Editor"
-    org = "CadQuery"
+    name = "CQ-Editor"  # 应用程序名称
+    org = "CadQuery"    # 组织名称
 
+    # 定义应用程序偏好设置
     preferences = Parameter.create(
         name="Preferences",
         children=[
@@ -82,151 +97,133 @@ class MainWindow(QMainWindow, MainMixin):
     )
 
     def __init__(self, parent=None, filename=None):
-
+        """初始化主窗口
+        Args:
+            parent: 父窗口对象
+            filename: 要打开的文件名
+        """
         super(MainWindow, self).__init__(parent)
         MainMixin.__init__(self)
 
+        # 设置应用程序图标
         self.setWindowIcon(icon("app"))
 
-        # Windows workaround - makes the correct task bar icon show up.
+        # Windows系统下的任务栏图标修复
         if sys.platform == "win32":
             import ctypes
-
-            myappid = "cq-editor"  # arbitrary string
+            myappid = "cq-editor"  # 应用程序ID
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
+        # 创建3D视图作为中央窗口
         self.viewer = OCCViewer(self)
         self.setCentralWidget(self.viewer.canvas)
 
-        self.prepare_panes()
-        self.registerComponent("viewer", self.viewer)
-        self.prepare_toolbar()
-        self.prepare_menubar()
+        # 初始化各个组件
+        self.prepare_panes()        # 准备面板
+        self.registerComponent("viewer", self.viewer)  # 注册视图组件
+        self.prepare_toolbar()      # 准备工具栏
+        self.prepare_menubar()      # 准备菜单栏
+        self.prepare_statusbar()    # 准备状态栏
+        self.prepare_actions()      # 准备动作
+        self.components["object_tree"].addLines()  # 添加对象树
+        self.prepare_console()      # 准备控制台
 
-        self.prepare_statusbar()
-        self.prepare_actions()
+        self.fill_dummy()          # 填充示例内容
+        self.setup_logging()       # 设置日志系统
 
-        self.components["object_tree"].addLines()
-
-        self.prepare_console()
-
-        self.fill_dummy()
-
-        self.setup_logging()
-
-        # Allows us to react to the top-level settings for this window being changed
+        # 连接偏好设置变化信号
         self.preferences.sigTreeStateChanged.connect(self.preferencesChanged)
 
+        # 恢复窗口和偏好设置
         self.restorePreferences()
         self.restoreWindow()
 
-        # Let the user know when the file has been modified
+        # 监听文件修改状态
         self.components["editor"].document().modificationChanged.connect(
             self.update_window_title
         )
 
+        # 如果提供了文件名，则打开该文件
         if filename:
             self.components["editor"].load_from_file(filename)
 
+        # 恢复组件状态
         self.restoreComponentState()
 
     def preferencesChanged(self, param, changes):
+        """处理偏好设置变化
+        当用户更改主题设置时，更新整个应用程序的外观
+        
+        Args:
+            param: 发生变化的参数对象
+            changes: 变化信息
         """
-        当此窗口的偏好设置发生变化时触发此方法。
-
-        :param param: 发生变化的偏好设置参数对象，当前方法未使用该参数。
-        :param changes: 包含偏好设置变化信息的对象，当前方法未使用该参数。
-        """
-
-        # 根据“Light/Dark Theme”偏好设置切换主题
-        # 使用默认的浅色主题/调色板
+        # 根据主题设置更新界面
         if self.preferences["Light/Dark Theme"] == "Light":
-            # 清除自定义样式表，恢复默认样式
+            # 恢复默认浅色主题
             QApplication.instance().setStyleSheet("")
-            # 设置应用程序使用标准调色板
             QApplication.instance().setPalette(QApplication.style().standardPalette())
-
-            # 控制台主题需要单独更改
             self.components["console"].app_theme_changed("Light")
-        # 使用深色主题/调色板
         elif self.preferences["Light/Dark Theme"] == "Dark":
-            # 设置应用程序使用“Fusion”样式表，这是一个深色主题的样式表
+            # 设置深色主题
             QApplication.instance().setStyle("Fusion")
-
-            # 设置自定义深色主题/调色板
+            
+            # 创建深色主题调色板
             white_color = QColor(255, 255, 255)
             black_color = QColor(0, 0, 0)
             red_color = QColor(255, 0, 0)
             palette = QPalette()
-            # 设置调色板的各个颜色
+            
+            # 设置各种界面元素的颜色
             palette.setColor(QPalette.Window, QColor(53, 53, 53))
-            # 设置窗口文本颜色为白色
             palette.setColor(QPalette.WindowText, white_color)
-            # 设置基础控件背景颜色为深灰色
             palette.setColor(QPalette.Base, QColor(25, 25, 25))
-            # 设置交替基础控件的背景颜色为深灰色
             palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-            # 设置工具提示的背景颜色为深灰色
             palette.setColor(QPalette.ToolTipBase, black_color)
-            # 设置工具提示文本颜色为白色
             palette.setColor(QPalette.ToolTipText, white_color)
-            # 设置普通文本颜色为白色
             palette.setColor(QPalette.Text, white_color)
-            # 设置按钮的颜色为深灰色
             palette.setColor(QPalette.Button, QColor(53, 53, 53))
-            # 设置按钮文本颜色为白色
             palette.setColor(QPalette.ButtonText, white_color)
-            # 设置高亮的文本颜色为红色
             palette.setColor(QPalette.BrightText, red_color)
-            # 设置链接的颜色为蓝色
             palette.setColor(QPalette.Link, QColor(42, 130, 218))
-            # 设置选中区域背景颜色为蓝色
             palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-            # 设置选中区域文本颜色为白色
             palette.setColor(QPalette.HighlightedText, black_color)
-            # 设置应用程序的调色板
+            
+            # 应用调色板
             QApplication.instance().setPalette(palette)
-
-            # 控制台主题需要单独更改
             self.components["console"].app_theme_changed("Dark")
 
-        # 单独调整工具栏的颜色，避免使用单独的深色主题图标
+        # 调整工具栏颜色
         p = self.toolbar.palette()
         if self.preferences["Light/Dark Theme"] == "Dark":
-            # 设置工具栏的背景颜色为深灰色
             p.setColor(QPalette.Background, QColor(120, 120, 120))
-
-            # 微调深色主题下的QMenu项的调色板
             menu_palette = self.menuBar().palette()
-            # 设置菜单的背景颜色为深灰色
             menu_palette.setColor(QPalette.Base, QColor(80, 80, 80))
-            # 为菜单栏下所有QMenu应用新的调色板
             for menu in self.menuBar().findChildren(QMenu):
                 menu.setPalette(menu_palette)
         else:
-            # 设置浅色主题下工具栏的背景颜色
             p.setColor(QPalette.Background, QColor(240, 240, 240))
-
-            # 恢复QMenu项的调色板为浅色主题
             menu_palette = self.menuBar().palette()
-            # 设置QMenu项的基础背景颜色为浅色
             menu_palette.setColor(QPalette.Base, QColor(240, 240, 240))
-            # 
             for menu in self.menuBar().findChildren(QMenu):
                 menu.setPalette(menu_palette)
-        # 为工具栏应用新的调色板
         self.toolbar.setPalette(p)
 
     def closeEvent(self, event):
-
+        """处理窗口关闭事件
+        在关闭窗口前保存状态，并检查是否有未保存的更改
+        
+        Args:
+            event: 关闭事件对象
+        """
+        # 保存窗口状态和偏好设置
         self.saveWindow()
         self.savePreferences()
         self.saveComponentState()
 
+        # 检查是否有未保存的更改
         if self.components["editor"].document().isModified():
-
             rv = confirm(self, "Confirm close", "Close without saving?")
-
             if rv:
                 event.accept()
                 super(MainWindow, self).closeEvent(event)
@@ -236,61 +233,77 @@ class MainWindow(QMainWindow, MainMixin):
             super(MainWindow, self).closeEvent(event)
 
     def prepare_panes(self):
-
+        """准备和初始化所有面板组件
+        包括编辑器、对象树、控制台等
+        """
+        # 注册编辑器组件
         self.registerComponent(
             "editor",
             Editor(self),
             lambda c: dock(c, "Editor", self, defaultArea="left"),
         )
 
+        # 注册对象树组件
         self.registerComponent(
             "object_tree",
             ObjectTree(self),
             lambda c: dock(c, "Objects", self, defaultArea="right"),
         )
 
+        # 注册错误追踪面板
         self.registerComponent(
             "traceback_viewer",
             TracebackPane(self),
             lambda c: dock(c, "Current traceback", self, defaultArea="bottom"),
         )
 
+        # 注册调试器
         self.registerComponent("debugger", Debugger(self))
 
+        # 注册控制台
         self.registerComponent(
             "console",
             ConsoleWidget(self),
             lambda c: dock(c, "Console", self, defaultArea="bottom"),
         )
 
+        # 注册变量查看器
         self.registerComponent(
             "variables_viewer",
             LocalsView(self),
             lambda c: dock(c, "Variables", self, defaultArea="right"),
         )
 
+        # 注册CQ对象检查器
         self.registerComponent(
             "cq_object_inspector",
             CQObjectInspector(self),
             lambda c: dock(c, "CQ object inspector", self, defaultArea="right"),
         )
+
+        # 注册日志查看器
         self.registerComponent(
             "log",
             LogViewer(self),
             lambda c: dock(c, "Log viewer", self, defaultArea="bottom"),
         )
 
+        # 显示所有面板
         for d in self.docks.values():
             d.show()
 
+        # 连接标准输出重定向
         PRINT_REDIRECTOR.sigStdoutWrite.connect(
             lambda text: self.components["log"].append(text)
         )
 
     def prepare_menubar(self):
-
+        """准备菜单栏
+        创建并组织所有菜单项
+        """
         menu = self.menuBar()
 
+        # 创建主要菜单
         menu_file = menu.addMenu("&File")
         menu_edit = menu.addMenu("&Edit")
         menu_tools = menu.addMenu("&Tools")
@@ -298,7 +311,7 @@ class MainWindow(QMainWindow, MainMixin):
         menu_view = menu.addMenu("&View")
         menu_help = menu.addMenu("&Help")
 
-        # per component menu elements
+        # 组织菜单结构
         menus = {
             "File": menu_file,
             "Edit": menu_edit,
@@ -308,10 +321,11 @@ class MainWindow(QMainWindow, MainMixin):
             "Help": menu_help,
         }
 
+        # 为每个组件添加菜单项
         for comp in self.components.values():
             self.prepare_menubar_component(menus, comp.menuActions())
 
-        # global menu elements
+        # 添加视图菜单项
         menu_view.addSeparator()
         for d in self.findChildren(QDockWidget):
             menu_view.addAction(d.toggleViewAction())
@@ -320,6 +334,7 @@ class MainWindow(QMainWindow, MainMixin):
         for t in self.findChildren(QToolBar):
             menu_view.addAction(t.toggleViewAction())
 
+        # 添加编辑菜单项
         menu_edit.addAction(
             QAction(
                 icon("toggle-comment"),
@@ -338,16 +353,14 @@ class MainWindow(QMainWindow, MainMixin):
             )
         )
 
+        # 添加帮助菜单项
         menu_help.addAction(
             QAction(icon("help"), "Documentation", self, triggered=self.documentation)
         )
-
         menu_help.addAction(
             QAction("CQ documentation", self, triggered=self.cq_documentation)
         )
-
         menu_help.addAction(QAction(icon("about"), "About", self, triggered=self.about))
-
         menu_help.addAction(
             QAction(
                 "Check for CadQuery updates", self, triggered=self.check_for_cq_updates
@@ -355,26 +368,39 @@ class MainWindow(QMainWindow, MainMixin):
         )
 
     def prepare_menubar_component(self, menus, comp_menu_dict):
-
+        """为组件准备菜单项
+        
+        Args:
+            menus: 菜单字典
+            comp_menu_dict: 组件菜单字典
+        """
         for name, action in comp_menu_dict.items():
             menus[name].addActions(action)
 
     def prepare_toolbar(self):
-
+        """准备工具栏
+        创建并组织工具栏按钮
+        """
         self.toolbar = QToolBar("Main toolbar", self, objectName="Main toolbar")
 
+        # 添加组件工具栏动作
         for c in self.components.values():
             add_actions(self.toolbar, c.toolbarActions())
 
         self.addToolBar(self.toolbar)
 
     def prepare_statusbar(self):
-
+        """准备状态栏
+        创建状态栏标签
+        """
         self.status_label = QLabel("", parent=self)
         self.statusBar().insertPermanentWidget(0, self.status_label)
 
     def prepare_actions(self):
-
+        """准备所有动作和信号连接
+        建立组件之间的通信
+        """
+        # 连接调试器信号
         self.components["debugger"].sigRendered.connect(
             self.components["object_tree"].addObjects
         )
@@ -388,6 +414,7 @@ class MainWindow(QMainWindow, MainMixin):
             self.components["console"].push_vars
         )
 
+        # 连接对象树信号
         self.components["object_tree"].sigObjectsAdded[list].connect(
             self.components["viewer"].display_many
         )
@@ -410,14 +437,17 @@ class MainWindow(QMainWindow, MainMixin):
             self.components["viewer"].set_selected
         )
 
+        # 连接视图信号
         self.components["viewer"].sigObjectSelected.connect(
             self.components["object_tree"].handleGraphicalSelection
         )
 
+        # 连接错误追踪信号
         self.components["traceback_viewer"].sigHighlightLine.connect(
             self.components["editor"].go_to_line
         )
 
+        # 连接CQ对象检查器信号
         self.components["cq_object_inspector"].sigDisplayObjects.connect(
             self.components["viewer"].display_many
         )
@@ -434,6 +464,7 @@ class MainWindow(QMainWindow, MainMixin):
             self.components["viewer"].set_grid_orientation
         )
 
+        # 连接调试器信号
         self.components["debugger"].sigLocalsChanged.connect(
             self.components["variables_viewer"].update_frame
         )
@@ -450,7 +481,7 @@ class MainWindow(QMainWindow, MainMixin):
             self.components["traceback_viewer"].addTraceback
         )
 
-        # trigger re-render when file is modified externally or saved
+        # 连接编辑器信号
         self.components["editor"].triggerRerender.connect(
             self.components["debugger"].render
         )
@@ -459,14 +490,16 @@ class MainWindow(QMainWindow, MainMixin):
         )
 
     def prepare_console(self):
-
+        """准备控制台
+        设置控制台环境和变量
+        """
         console = self.components["console"]
         obj_tree = self.components["object_tree"]
 
-        # application related items
+        # 添加应用程序相关变量
         console.push_vars({"self": self})
 
-        # CQ related items
+        # 添加CQ相关变量
         console.push_vars(
             {
                 "show": obj_tree.addObject,
@@ -478,16 +511,21 @@ class MainWindow(QMainWindow, MainMixin):
         )
 
     def fill_dummy(self):
-
+        """填充示例内容
+        在编辑器中添加示例代码
+        """
         self.components["editor"].set_text(
             'import cadquery as cq\nresult = cq.Workplane("XY" ).box(3, 3, 0.5).edges("|Z").fillet(0.125)\nshow_object(result)'
         )
 
     def setup_logging(self):
-
+        """设置日志系统
+        配置日志记录和异常处理
+        """
         from logbook.compat import redirect_logging
         from logbook import INFO, Logger
 
+        # 重定向日志
         redirect_logging()
         self.components["log"].handler.level = INFO
         self.components["log"].handler.push_application()
@@ -495,7 +533,13 @@ class MainWindow(QMainWindow, MainMixin):
         self._logger = Logger(self.name)
 
         def handle_exception(exc_type, exc_value, exc_traceback):
-
+            """处理未捕获的异常
+            
+            Args:
+                exc_type: 异常类型
+                exc_value: 异常值
+                exc_traceback: 异常追踪信息
+            """
             if issubclass(exc_type, KeyboardInterrupt):
                 sys.__excepthook__(exc_type, exc_value, exc_traceback)
                 return
@@ -505,15 +549,16 @@ class MainWindow(QMainWindow, MainMixin):
                 exc_info=(exc_type, exc_value, exc_traceback),
             )
 
+        # 设置全局异常处理器
         sys.excepthook = handle_exception
 
     def edit_preferences(self):
-
+        """打开偏好设置对话框"""
         prefs = PreferencesWidget(self, self.components)
         prefs.exec_()
 
     def about(self):
-
+        """显示关于对话框"""
         about_dialog(
             self,
             f"About CQ-editor",
@@ -521,25 +566,31 @@ class MainWindow(QMainWindow, MainMixin):
         )
 
     def check_for_cq_updates(self):
-
+        """检查CadQuery更新"""
         check_gtihub_for_updates(self, cq)
 
     def documentation(self):
-
+        """打开文档链接"""
         open_url("https://github.com/CadQuery")
 
     def cq_documentation(self):
-
+        """打开CadQuery文档链接"""
         open_url("https://cadquery.readthedocs.io/en/latest/")
 
     def handle_filename_change(self, fname):
-
+        """处理文件名变化
+        
+        Args:
+            fname: 新的文件名
+        """
         new_title = fname if fname else "*"
         self.setWindowTitle(f"{self.name}: {new_title}")
 
     def update_window_title(self, modified):
-        """
-        Allows updating the window title to show that the document has been modified.
+        """更新窗口标题以显示文件修改状态
+        
+        Args:
+            modified: 文件是否被修改
         """
         title = self.windowTitle().rstrip("*")
         if modified:
@@ -548,5 +599,4 @@ class MainWindow(QMainWindow, MainMixin):
 
 
 if __name__ == "__main__":
-
     pass

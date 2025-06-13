@@ -1,3 +1,4 @@
+# 基础组件文件
 import os
 import spyder.utils.encoding
 from modulefinder import ModuleFinder
@@ -164,12 +165,21 @@ class Editor(CodeEditor, ComponentMixin):
         return rv
 
     def new(self):
-
+        """
+        创建一个新的文档。在创建新文档之前，会先确认是否丢弃当前未保存的更改。
+        如果用户选择不丢弃未保存的更改，则会取消创建新文档的操作。
+        若操作继续，会清空编辑器内容，重置文件名，并标记文档为未修改状态。
+        """
+        # 调用 confirm_discard 方法确认是否丢弃未保存的更改
+        # 如果用户选择不丢弃，该方法返回 False，此时直接返回，终止创建新文档的操作
         if not self.confirm_discard():
             return
 
+        # 清空编辑器中的文本内容
         self.set_text("")
+        # 将文件名重置为空字符串，表示这是一个未命名的新文档
         self.filename = ""
+        # 重置文档的修改状态，标记为未修改
         self.reset_modified()
 
     def open(self):

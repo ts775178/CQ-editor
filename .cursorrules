@@ -1,0 +1,55 @@
+{
+    "project": {
+        "name": "CQ-editor",
+        "description": "CadQuery的图形用户界面编辑器",
+        "version": "1.0.0"
+    },
+    "rules": {
+        "code_style": {
+            "python": {
+                "max_line_length": 100,
+                "indent_size": 4,
+                "quote_style": "double",
+                "docstring_style": "google",
+                "import_order": [
+                    "standard_library",
+                    "third_party",
+                    "local"
+                ]
+            }
+        },
+        "file_structure": {
+            "required_directories": [
+                "cq_editor/",
+                "tests/",
+                "icons/",
+                "screenshots/"
+            ],
+            "required_files": [
+                "README.md",
+                "LICENSE",
+                "setup.py",
+                "pyproject.toml"
+            ]
+        },
+        "documentation": {
+            "required_sections": [
+                "安装说明",
+                "使用说明",
+                "开发指南",
+                "贡献指南"
+            ]
+        },
+        "testing": {
+            "coverage_threshold": 80,
+            "required_test_types": [
+                "unit_tests",
+                "integration_tests"
+            ]
+        },
+        "version_control": {
+            "branch_naming": "feature/*, bugfix/*, hotfix/*",
+            "commit_message_format": "type(scope): description"
+        }
+    }
+} 
