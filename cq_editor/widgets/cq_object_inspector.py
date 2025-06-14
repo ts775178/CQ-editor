@@ -1,3 +1,4 @@
+# CadQuery对象检查器组件
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QAction
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 

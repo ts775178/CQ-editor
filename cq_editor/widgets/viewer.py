@@ -1,4 +1,4 @@
-# 基础组件文件
+# 3D视图组件
 from PyQt5.QtWidgets import QWidget, QDialog, QTreeWidgetItem, QApplication, QAction
 
 from PyQt5.QtCore import pyqtSlot, pyqtSignal

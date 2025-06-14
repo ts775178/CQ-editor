@@ -1,3 +1,4 @@
+# 对象树组件？
 from PyQt5.QtWidgets import (
     QTreeWidget,
     QTreeWidgetItem,

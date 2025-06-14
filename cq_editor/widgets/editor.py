@@ -1,4 +1,4 @@
-# 基础组件文件
+# 代码编辑器组件
 import os
 import spyder.utils.encoding
 from modulefinder import ModuleFinder

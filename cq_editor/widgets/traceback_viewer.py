@@ -1,3 +1,4 @@
+# 错误追踪查看器
 from traceback import extract_tb, format_exception_only
 from itertools import dropwhile
 

@@ -1,12 +1,13 @@
-from PyQt5.QtWidgets import QApplication, QAction
-from PyQt5.QtCore import pyqtSlot
+# 控制台组件
+from PyQt5.QtWidgets import QApplication, QAction  # 应用程序和动作
+from PyQt5.QtCore import pyqtSlot  # 信号和槽机制
 
-from qtconsole.rich_jupyter_widget import RichJupyterWidget
-from qtconsole.inprocess import QtInProcessKernelManager
+from qtconsole.rich_jupyter_widget import RichJupyterWidget  # Jupyter小部件
+from qtconsole.inprocess import QtInProcessKernelManager  # 内核管理器
 
-from ..mixins import ComponentMixin
+from ..mixins import ComponentMixin  # 组件混合
 
-from ..icons import icon
+from ..icons import icon  # 图标
 
 
 class ConsoleWidget(RichJupyterWidget, ComponentMixin):
@@ -15,9 +16,6 @@ class ConsoleWidget(RichJupyterWidget, ComponentMixin):
 
     def __init__(self, customBanner=None, namespace=dict(), *args, **kwargs):
         super(ConsoleWidget, self).__init__(*args, **kwargs)
-
-        #        if not customBanner is None:
-        #            self.banner = customBanner
 
         self._actions = {
             "Run": [
@@ -47,10 +45,10 @@ class ConsoleWidget(RichJupyterWidget, ComponentMixin):
                             """
         self.syntax_style = "zenburn"
 
-        self.kernel_manager = kernel_manager = QtInProcessKernelManager()
-        kernel_manager.start_kernel(show_banner=False)
-        kernel_manager.kernel.gui = "qt"
-        kernel_manager.kernel.shell.banner1 = ""
+        self.kernel_manager = kernel_manager = QtInProcessKernelManager()  # 创建内核管理器
+        kernel_manager.start_kernel(show_banner=False)  # 启动内核
+        kernel_manager.kernel.gui = "qt"  # 设置内核GUI
+        kernel_manager.kernel.shell.banner1 = ""  # 设置内核shell banner
 
         self.kernel_client = kernel_client = self._kernel_manager.client()
         kernel_client.start_channels()
@@ -74,7 +72,7 @@ class ConsoleWidget(RichJupyterWidget, ComponentMixin):
         """
         self.kernel_manager.kernel.shell.push(variableDict)
 
-    def clear(self):
+    def clear(self):  # 清除控制台
         """
         Clears the terminal
         """

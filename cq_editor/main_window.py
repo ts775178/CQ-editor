@@ -102,6 +102,7 @@ class MainWindow(QMainWindow, MainMixin):
             parent: 父窗口对象
             filename: 要打开的文件名
         """
+        # 调用父类QMainWindow的构造函数
         super(MainWindow, self).__init__(parent)
         MainMixin.__init__(self)
 
@@ -114,20 +115,19 @@ class MainWindow(QMainWindow, MainMixin):
             myappid = "cq-editor"  # 应用程序ID
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-        # 创建3D视图作为中央窗口
+        # 中央区域，创建3D视图作为中央窗口
         self.viewer = OCCViewer(self)
         self.setCentralWidget(self.viewer.canvas)
 
         # 初始化各个组件
-        self.prepare_panes()        # 准备面板
+        self.prepare_panes()        # 面板注册，注册多个 Dock 面板并设置默认显示位置
         self.registerComponent("viewer", self.viewer)  # 注册视图组件
-        self.prepare_toolbar()      # 准备工具栏
-        self.prepare_menubar()      # 准备菜单栏
-        self.prepare_statusbar()    # 准备状态栏
-        self.prepare_actions()      # 准备动作
+        self.prepare_toolbar()      # 工具栏添加工具栏并连接各组件的按钮
+        self.prepare_menubar()      # 设置菜单（文件、编辑、运行、帮助等）
+        self.prepare_statusbar()    # 显示状态信息（如当前编辑文件状态）
+        self.prepare_actions()      # 各组件之间的事件反应逻辑
         self.components["object_tree"].addLines()  # 添加对象树
         self.prepare_console()      # 准备控制台
-
         self.fill_dummy()          # 填充示例内容
         self.setup_logging()       # 设置日志系统
 

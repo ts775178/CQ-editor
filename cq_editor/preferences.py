@@ -8,12 +8,7 @@ from .utils import splitter, layout
 
 class PreferencesTreeItem(QTreeWidgetItem):
 
-    def __init__(
-        self,
-        name,
-        widget,
-    ):
-
+    def __init__(self, name, widget):
         super(PreferencesTreeItem, self).__init__(name)
         self.widget = widget
 
@@ -21,12 +16,9 @@ class PreferencesTreeItem(QTreeWidgetItem):
 class PreferencesWidget(QDialog):
 
     def __init__(self, parent, components):
-
-        super(PreferencesWidget, self).__init__(
-            parent,
-            Qt.Window | Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint,
-            windowTitle="Preferences",
-        )
+        super(PreferencesWidget, self).__init__(parent)
+        self.setWindowTitle("Preferences")
+        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
 
         self.stacked = QStackedWidget(self)
         self.preferences_tree = QTreeWidget(
@@ -94,6 +86,5 @@ class PreferencesWidget(QDialog):
 
     @pyqtSlot(QTreeWidgetItem, QTreeWidgetItem)
     def handleSelection(self, item, *args):
-
         if item:
             self.stacked.setCurrentWidget(item.widget)
