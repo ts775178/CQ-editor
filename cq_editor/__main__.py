@@ -16,9 +16,8 @@ from .main_window import MainWindow
 def main():
     # 创建一个命令行参数解析器。说明这个程序可以从命令行运行并接收文件名作为参数。
     parser = argparse.ArgumentParser(description=NAME)
-    # 实际解析命令行参数。app.arguments() 是 PyQt 提供的方式，用来获取启动参数。
     parser.add_argument("filename", nargs="?", default=None)
-
+    # 实际解析命令行参数。app.arguments() 是 PyQt 提供的方式，用来获取启动参数。
     args = parser.parse_args(app.arguments()[1:])
     # 创建主窗口实例，通常是整个 GUI 的核心类，负责布局和用户交互。
     win = MainWindow(filename=args.filename if args.filename else None)
@@ -29,5 +28,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

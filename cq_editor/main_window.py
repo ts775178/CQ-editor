@@ -39,11 +39,13 @@ from .icons import icon
 from pyqtgraph.parametertree import Parameter
 from .preferences import PreferencesWidget
 
-
+    # 重定向标准输出到日志窗口
 class _PrintRedirectorSingleton(QObject):
-    """这个类通过monkey-patch方式重定向sys.stdout.write，使其发出信号。
+    """
+    这个类通过monkey-patch方式重定向sys.stdout.write，使其发出信号。
     它被实例化为.main_window.PRINT_REDIRECTOR，不应该再次实例化。
-    这样做的目的是将标准输出重定向到GUI界面的日志窗口中。
+    这样做的目的是
+    将标准输出重定向到GUI界面的日志窗口中。
     """
 
     sigStdoutWrite = pyqtSignal(str)  # 定义信号，用于传递标准输出文本
@@ -96,7 +98,7 @@ class MainWindow(QMainWindow, MainMixin):
         ],
     )
 
-    def __init__(self, parent=None, filename=None):
+    def __init__(self, parent=None, filename=None):  # 前面没有任何窗体，parent=None
         """初始化主窗口
         Args:
             parent: 父窗口对象
@@ -232,10 +234,8 @@ class MainWindow(QMainWindow, MainMixin):
         else:
             super(MainWindow, self).closeEvent(event)
 
+    # 准备和初始化所有面板组件
     def prepare_panes(self):
-        """准备和初始化所有面板组件
-        包括编辑器、对象树、控制台等
-        """
         # 注册编辑器组件
         self.registerComponent(
             "editor",
@@ -264,6 +264,7 @@ class MainWindow(QMainWindow, MainMixin):
         self.registerComponent(
             "console",
             ConsoleWidget(self),
+            # 调用dock函数将这个组件添加到主窗口的底部区域，设置停靠窗口的标题为console
             lambda c: dock(c, "Console", self, defaultArea="bottom"),
         )
 
@@ -303,7 +304,7 @@ class MainWindow(QMainWindow, MainMixin):
         """
         menu = self.menuBar()
 
-        # 创建主要菜单
+        # 创建主要菜单，app顶部那些菜单
         menu_file = menu.addMenu("&File")
         menu_edit = menu.addMenu("&Edit")
         menu_tools = menu.addMenu("&Tools")
@@ -529,7 +530,6 @@ class MainWindow(QMainWindow, MainMixin):
         redirect_logging()
         self.components["log"].handler.level = INFO
         self.components["log"].handler.push_application()
-
         self._logger = Logger(self.name)
 
         def handle_exception(exc_type, exc_value, exc_traceback):
@@ -588,7 +588,6 @@ class MainWindow(QMainWindow, MainMixin):
 
     def update_window_title(self, modified):
         """更新窗口标题以显示文件修改状态
-        
         Args:
             modified: 文件是否被修改
         """

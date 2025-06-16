@@ -20,14 +20,21 @@ from ..icons import icon
 
 
 class Editor(CodeEditor, ComponentMixin):
+    """
+    编辑器组件类
+    继承自Spyder的CodeEditor和自定义的ComponentMixin
+    这样既获得了专业的代码编辑功能,又保持了与主程序的组件化集成
+    """
 
     name = "Code Editor"
 
-    # This signal is emitted whenever the currently-open file changes and
-    # autoreload is enabled.
+    # 定义信号用于通知文件变化和自动重载
+    # 使用信号机制实现组件间的松耦合通信
     triggerRerender = pyqtSignal(bool)
     sigFilenameChanged = pyqtSignal(str)
 
+    # 使用参数树定义编辑器配置
+    # 这种方式便于统一管理和持久化配置
     preferences = Parameter.create(
         name="Preferences",
         children=[
@@ -52,27 +59,36 @@ class Editor(CodeEditor, ComponentMixin):
 
     EXTENSIONS = "py"
 
-    # Tracks whether or not the document was saved from the Spyder editor vs an external editor
+    # 标记文件是否由编辑器自身修改
+    # 这个标记用于区分外部修改和内部修改,避免自动重载时的冲突
     was_modified_by_self = False
 
     def __init__(self, parent=None):
-
+        """初始化编辑器
+        采用多继承的方式,需要分别调用父类的初始化方法
+        这样可以确保所有功能都被正确初始化
+        """
         self._watched_file = None
 
+        # 调用父类初始化
         super(Editor, self).__init__(parent)
         ComponentMixin.__init__(self)
 
+        # 配置编辑器基本属性
+        # 这些设置直接影响编辑器的外观和行为
         self.setup_editor(
-            linenumbers=True,
-            markers=True,
-            edge_line=self.preferences["Maximum line length"],
-            tab_mode=False,
-            show_blanks=True,
-            font=QFontDatabase.systemFont(QFontDatabase.FixedFont),
-            language="Python",
-            filename="",
+            linenumbers=True,  # 显示行号
+            markers=True,      # 显示标记
+            edge_line=self.preferences["Maximum line length"],  # 设置行长度限制
+            tab_mode=False,    # 禁用Tab模式
+            show_blanks=True,  # 显示空白字符
+            font=QFontDatabase.systemFont(QFontDatabase.FixedFont),  # 使用等宽字体
+            language="Python", # 设置语言为Python
+            filename="",       # 初始无文件名
         )
 
+        # 定义编辑器动作
+        # 使用字典组织动作,便于管理和扩展
         self._actions = {
             "File": [
                 QAction(
@@ -103,14 +119,18 @@ class Editor(CodeEditor, ComponentMixin):
             ]
         }
 
+        # 添加动作到编辑器
         for a in self._actions.values():
             self.addActions(a)
 
+        # 修复上下文菜单
         self._fixContextMenu()
 
-        # autoreload support
+        # 设置文件监视器
+        # 使用QFileSystemWatcher实现文件自动重载
         self._file_watcher = QFileSystemWatcher(self)
-        # we wait for 50ms after a file change for the file to be written completely
+        # 使用定时器延迟处理文件变化
+        # 这样可以避免文件写入未完成就触发重载
         self._file_watch_timer = QTimer(self)
         self._file_watch_timer.setInterval(self.preferences["Autoreload delay"])
         self._file_watch_timer.setSingleShot(True)
@@ -119,35 +139,47 @@ class Editor(CodeEditor, ComponentMixin):
         )
         self._file_watch_timer.timeout.connect(self._file_changed)
 
+        # 更新编辑器配置
         self.updatePreferences()
 
     def _fixContextMenu(self):
-
+        """修复上下文菜单
+        移除不需要的Spyder编辑器动作
+        这样可以保持界面简洁,只保留必要的功能
+        """
         menu = self.menu
-
         menu.removeAction(self.run_cell_action)
         menu.removeAction(self.run_cell_and_advance_action)
         menu.removeAction(self.run_selection_action)
         menu.removeAction(self.re_run_last_cell_action)
 
     def updatePreferences(self, *args):
-
+        """更新编辑器配置
+        当配置改变时,需要同步更新编辑器的外观和行为
+        这样可以保持界面的一致性
+        """
+        # 更新颜色方案
         self.set_color_scheme(self.preferences["Color scheme"])
 
+        # 更新字体
         font = self.font()
         font.setPointSize(self.preferences["Font size"])
         self.set_font(font)
 
+        # 更新自动重载状态
         self.findChild(QAction, "autoreload").setChecked(self.preferences["Autoreload"])
 
+        # 更新文件监视延迟
         self._file_watch_timer.setInterval(self.preferences["Autoreload delay"])
 
+        # 更新换行模式
         self.toggle_wrap_mode(self.preferences["Line wrap"])
 
-        # Update the edge line (maximum line length)
+        # 更新行长度限制
         self.edge_line.set_enabled(True)
         self.edge_line.set_columns(self.preferences["Maximum line length"])
 
+        # 更新文件监视
         self._clear_watched_paths()
         self._watch_paths()
 
@@ -352,7 +384,10 @@ class Editor(CodeEditor, ComponentMixin):
                 self._logger.warning(f"could not open {filename}")
 
     def get_imported_module_paths(self, module_path):
-
+        """获取导入模块的路径
+        使用ModuleFinder分析Python文件中的导入语句
+        这样可以实现模块级别的文件监视
+        """
         finder = ModuleFinder([os.path.dirname(module_path)])
         imported_modules = []
 
@@ -361,8 +396,7 @@ class Editor(CodeEditor, ComponentMixin):
         except SyntaxError as err:
             self._logger.warning(f"Syntax error in {module_path}: {err}")
         except Exception as err:
-            # The module finder has trouble when CadQuery is imported in the top level script and in
-            # imported modules. The warning about it can be ignored.
+            # 处理CadQuery导入的特殊情况
             if "cadquery" not in finder.badmodules or (
                 "cadquery" in finder.badmodules and len(finder.badmodules) > 1
             ):
@@ -370,6 +404,7 @@ class Editor(CodeEditor, ComponentMixin):
                     f"Cannot determine imported modules in {module_path}: {type(err).__name__} {err}"
                 )
         else:
+            # 收集所有导入模块的路径
             for module_name, module in finder.modules.items():
                 if module_name != "__main__":
                     path = getattr(module, "__file__", None)
