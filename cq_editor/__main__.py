@@ -5,8 +5,6 @@ import argparse
 from PyQt5.QtWidgets import QApplication
 
 NAME = "CQ-editor"
-
-# need to initialize QApp here, otherewise svg icons do not work on windows
 # 必须先创建一个 QApplication 实例，才能使用窗口控件
 app = QApplication(sys.argv, applicationName=NAME)
 

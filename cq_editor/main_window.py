@@ -99,11 +99,6 @@ class MainWindow(QMainWindow, MainMixin):
     )
 
     def __init__(self, parent=None, filename=None):  # 前面没有任何窗体，parent=None
-        """初始化主窗口
-        Args:
-            parent: 父窗口对象
-            filename: 要打开的文件名
-        """
         # 调用父类QMainWindow的构造函数
         super(MainWindow, self).__init__(parent)
         MainMixin.__init__(self)
@@ -303,7 +298,6 @@ class MainWindow(QMainWindow, MainMixin):
         创建并组织所有菜单项
         """
         menu = self.menuBar()
-
         # 创建主要菜单，app顶部那些菜单
         menu_file = menu.addMenu("&File")
         menu_edit = menu.addMenu("&Edit")
