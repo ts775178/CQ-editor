@@ -364,8 +364,6 @@ class MainWindow(QMainWindow, MainMixin):
 
     def prepare_menubar_component(self, menus, comp_menu_dict):
         """为组件准备菜单项
-        
-        Args:
             menus: 菜单字典
             comp_menu_dict: 组件菜单字典
         """
