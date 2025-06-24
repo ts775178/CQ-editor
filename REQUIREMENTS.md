@@ -55,7 +55,7 @@ CQ-editor 是一个基于 CadQuery 的图形用户界面编辑器，旨在提供
 ### 3.1 开发环境
 
 - Python 3.7+
-- PyQt5
+- PySide6
 - CadQuery
 - OpenCascade
 

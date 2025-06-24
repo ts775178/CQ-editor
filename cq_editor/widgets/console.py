@@ -1,6 +1,7 @@
 # 控制台组件
-from PyQt5.QtWidgets import QApplication, QAction  # 应用程序和动作
-from PyQt5.QtCore import pyqtSlot  # 信号和槽机制
+from PySide6.QtWidgets import QApplication  # 应用程序和动作
+from PySide6.QtCore import Slot  # 信号和槽机制
+from PySide6.QtGui import QAction
 
 from qtconsole.rich_jupyter_widget import RichJupyterWidget  # Jupyter小部件
 from qtconsole.inprocess import QtInProcessKernelManager  # 内核管理器
@@ -90,7 +91,7 @@ class ConsoleWidget(RichJupyterWidget, ComponentMixin):
         # 将命名空间中的变量推送到 Jupyter 控制台
         self.push_vars(namespace)
 
-    @pyqtSlot(dict)
+    @Slot(dict)
     def push_vars(self, variableDict):
         """
         给定一个包含名称 / 值对的字典，将这些变量推送到 Jupyter 控制台小部件中。

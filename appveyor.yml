@@ -6,7 +6,7 @@ image:
 
 environment:
     matrix:
-        - PYTEST_QT_API: pyqt5
+        - PYTEST_QT_API: PySide6
     CODECOV_TOKEN:
         secure: ZggK9wgDeFdTp0pu0MEV+SY4i/i1Ls0xrEC2MxSQOQ0JQV+TkpzJJzI4au7L8TpD
     MINICONDA_DIRNAME: C:\FreshMiniconda

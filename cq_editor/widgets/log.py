@@ -2,9 +2,10 @@
 import logbook as logging
 import re
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtWidgets import QPlainTextEdit, QAction
+from PySide6 import QtGui
+from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QPlainTextEdit
+from PySide6.QtGui import QAction
 
 from ..mixins import ComponentMixin
 
@@ -22,7 +23,7 @@ def strip_escape_sequences(input_string):
 
 
 class _QtLogHandlerQObject(QObject):
-    sigRecordEmit = pyqtSignal(str)
+    sigRecordEmit = Signal(str)
 
 
 class QtLogHandler(logging.Handler, logging.StringFormatterHandlerMixin):

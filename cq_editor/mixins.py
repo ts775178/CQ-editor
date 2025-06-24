@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed May 23 22:02:30 2018
-
 @author: adam
 """
 
@@ -10,7 +9,7 @@ from functools import reduce
 from operator import add
 from logbook import Logger
 
-from PyQt5.QtCore import pyqtSlot, QSettings
+from PySide6.QtCore import Slot, QSettings
 
 
 class MainMixin(object):
@@ -110,7 +109,7 @@ class ComponentMixin(object):
         else:
             return []
 
-    @pyqtSlot(object, object)
+    @Slot(object, object)
     def updatePreferences(self, *args):
 
         pass

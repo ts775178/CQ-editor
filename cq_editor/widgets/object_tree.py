@@ -1,14 +1,13 @@
 # 对象树组件？
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QTreeWidget,
     QTreeWidgetItem,
-    QAction,
     QMenu,
     QWidget,
     QAbstractItemView,
 )
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt, Slot, Signal
 from pyqtgraph.parametertree import Parameter, ParameterTree
 
 from OCP.AIS import AIS_Line
@@ -130,12 +129,12 @@ class ObjectTree(QWidget, ComponentMixin):
         ],
     )
 
-    sigObjectsAdded = pyqtSignal([list], [list, bool])
-    sigObjectsRemoved = pyqtSignal(list)
-    sigCQObjectSelected = pyqtSignal(object)
-    sigAISObjectsSelected = pyqtSignal(list)
-    sigItemChanged = pyqtSignal(QTreeWidgetItem, int)
-    sigObjectPropertiesChanged = pyqtSignal()
+    sigObjectsAdded = Signal(list, bool)
+    sigObjectsRemoved = Signal(list)
+    sigCQObjectSelected = Signal(object)
+    sigAISObjectsSelected = Signal(list)
+    sigItemChanged = Signal(QTreeWidgetItem, int)
+    sigObjectPropertiesChanged = Signal()
 
     def __init__(self, parent):
 
@@ -249,7 +248,7 @@ class ObjectTree(QWidget, ComponentMixin):
 
             ais_list.append(line)
 
-        self.sigObjectsAdded.emit(ais_list)
+        self.sigObjectsAdded.emit(ais_list,False)
 
     def _current_properties(self):
 
@@ -265,8 +264,8 @@ class ObjectTree(QWidget, ComponentMixin):
         for p in properties[obj.properties["Name"]]:
             obj.properties[p.name()] = p.value()
 
-    @pyqtSlot(dict, bool)
-    @pyqtSlot(dict)
+    @Slot(dict, bool)
+    @Slot(dict)
     def addObjects(self, objects, clean=False, root=None):
 
         if root is None:
@@ -306,11 +305,11 @@ class ObjectTree(QWidget, ComponentMixin):
             root.addChild(child)
 
         if request_fit_view:
-            self.sigObjectsAdded[list, bool].emit(ais_list, True)
+            self.sigObjectsAdded.emit(ais_list, True)
         else:
-            self.sigObjectsAdded[list].emit(ais_list)
+            self.sigObjectsAdded.emit(ais_list,False)
 
-    @pyqtSlot(object, str, object)
+    @Slot(object, str, object)
     def addObject(self, obj, name="", options=None):
 
         if options is None:
@@ -330,10 +329,10 @@ class ObjectTree(QWidget, ComponentMixin):
             )
         )
 
-        self.sigObjectsAdded.emit([ais])
+        self.sigObjectsAdded.emit([ais],False)
 
-    @pyqtSlot(list)
-    @pyqtSlot()
+    @Slot(list)
+    @Slot()
     def removeObjects(self, objects=None):
 
         if objects:
@@ -343,7 +342,7 @@ class ObjectTree(QWidget, ComponentMixin):
 
         self.sigObjectsRemoved.emit(removed_items_ais)
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def stashObjects(self, action: bool):
 
         if action:
@@ -354,9 +353,9 @@ class ObjectTree(QWidget, ComponentMixin):
             self.removeObjects()
             self.CQ.addChildren(self._stash)
             ais_list = [el.ais for el in self._stash]
-            self.sigObjectsAdded.emit(ais_list)
+            self.sigObjectsAdded.emit(ais_list,False)
 
-    @pyqtSlot()
+    @Slot()
     def removeSelected(self):
 
         ixs = self.tree.selectedIndexes()
@@ -380,7 +379,7 @@ class ObjectTree(QWidget, ComponentMixin):
         if fname != "":
             export(shapes, export_type, fname, precision)
 
-    @pyqtSlot()
+    @Slot()
     def handleSelection(self):
 
         items = self.tree.selectedItems()
@@ -412,7 +411,7 @@ class ObjectTree(QWidget, ComponentMixin):
             self.properties_editor.setEnabled(False)
             self.properties_editor.clear()
 
-    @pyqtSlot(list)
+    @Slot(list)
     def handleGraphicalSelection(self, shapes):
 
         self.tree.clearSelection()
@@ -424,7 +423,7 @@ class ObjectTree(QWidget, ComponentMixin):
                 if item.ais.Shape().IsEqual(shape):
                     item.setSelected(True)
 
-    @pyqtSlot(QTreeWidgetItem, int)
+    @Slot(QTreeWidgetItem, int)
     def handleChecked(self, item, col):
 
         if type(item) is ObjectTreeItem:

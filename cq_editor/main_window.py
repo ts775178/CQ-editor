@@ -1,14 +1,14 @@
 # 负责GUI构造和交互界面
 import sys
 
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtWidgets import (
+# from PySide6.QtCore import QObject, Signalfrom PySide6.QtGui import QPalette, QColor
+from PySide6.QtCore import QObject, Signal
+from PySide6.QtGui import QPalette, QColor, QAction
+from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QToolBar,
     QDockWidget,
-    QAction,
     QApplication,
     QMenu,
 )
@@ -48,7 +48,7 @@ class _PrintRedirectorSingleton(QObject):
     将标准输出重定向到GUI界面的日志窗口中。
     """
 
-    sigStdoutWrite = pyqtSignal(str)  # 定义信号，用于传递标准输出文本
+    sigStdoutWrite = Signal(str)  # 定义信号，用于传递标准输出文本
 
     def __init__(self):
         super().__init__()
@@ -408,12 +408,12 @@ class MainWindow(QMainWindow, MainMixin):
         )
 
         # 连接对象树信号
-        self.components["object_tree"].sigObjectsAdded[list].connect(
-            self.components["viewer"].display_many
+        self.components["object_tree"].sigObjectsAdded.connect(
+            lambda *args: self.components["viewer"].display_many(*args)
         )
-        self.components["object_tree"].sigObjectsAdded[list, bool].connect(
+        '''self.components["object_tree"].sigObjectsAdded[list, bool].connect(
             self.components["viewer"].display_many
-        )
+        )'''
         self.components["object_tree"].sigItemChanged.connect(
             self.components["viewer"].update_item
         )
@@ -450,8 +450,8 @@ class MainWindow(QMainWindow, MainMixin):
         self.components["cq_object_inspector"].sigShowPlane.connect(
             self.components["viewer"].toggle_grid
         )
-        self.components["cq_object_inspector"].sigShowPlane[bool, float].connect(
-            self.components["viewer"].toggle_grid
+        self.components["cq_object_inspector"].sigShowPlane.connect(
+            lambda visible, scale: self.components["viewer"].toggle_grid(visible, scale)
         )
         self.components["cq_object_inspector"].sigChangePlane.connect(
             self.components["viewer"].set_grid_orientation
@@ -547,7 +547,7 @@ class MainWindow(QMainWindow, MainMixin):
     def edit_preferences(self):
         """打开偏好设置对话框"""
         prefs = PreferencesWidget(self, self.components)
-        prefs.exec_()
+        prefs.exec()
 
     def about(self):
         """显示关于对话框"""

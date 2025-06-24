@@ -8,16 +8,17 @@ from bdb import BdbQuit
 from inspect import currentframe
 
 import cadquery as cq
-from PyQt5 import QtCore
-from PyQt5.QtCore import (
+from PySide6 import QtCore
+from PySide6.QtCore import (
     Qt,
     QObject,
-    pyqtSlot,
-    pyqtSignal,
+    Slot,
+    Signal,
     QEventLoop,
     QAbstractTableModel,
 )
-from PyQt5.QtWidgets import QAction, QTableView
+from PySide6.QtWidgets import QTableView
+from PySide6.QtGui import QAction
 
 from logbook import info
 from path import Path
@@ -103,7 +104,7 @@ class LocalsView(QTableView, ComponentMixin):
         vheader = self.verticalHeader()
         vheader.setVisible(False)
 
-    @pyqtSlot(dict)
+    @Slot(dict)
     def update_frame(self, frame):
 
         model = LocalsModel(self)
@@ -126,15 +127,15 @@ class Debugger(QObject, ComponentMixin):
         ],
     )
 
-    sigRendered = pyqtSignal(dict)
-    sigLocals = pyqtSignal(dict)
-    sigTraceback = pyqtSignal(object, str)
+    sigRendered = Signal(dict)
+    sigLocals = Signal(dict)
+    sigTraceback = Signal(object, str)
 
-    sigFrameChanged = pyqtSignal(object)
-    sigLineChanged = pyqtSignal(int)
-    sigLocalsChanged = pyqtSignal(dict)
-    sigCQChanged = pyqtSignal(dict, bool)
-    sigDebugging = pyqtSignal(bool)
+    sigFrameChanged = Signal(object)
+    sigLineChanged = Signal(int)
+    sigLocalsChanged = Signal(dict)
+    sigCQChanged = Signal(dict, bool)
+    sigDebugging = Signal(bool)
 
     _frames: List[FrameType]
     _stop_debugging: bool
@@ -287,7 +288,7 @@ class Debugger(QObject, ComponentMixin):
         for name in injected_names:
             module.__dict__.pop(name)
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def render(self):
 
         seed(59798267586177)
@@ -324,7 +325,7 @@ class Debugger(QObject, ComponentMixin):
     def breakpoints(self):
         return [el[0] for el in self.get_breakpoints()]
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def debug(self, value):
 
         # used to stop the debugging session early

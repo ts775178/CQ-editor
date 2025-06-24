@@ -10,8 +10,8 @@ import pytest
 import pytestqt
 import cadquery as cq
 
-from PyQt5.QtCore import Qt, QSettings
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtCore import Qt, QSettings
+from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from cq_editor.__main__ import MainWindow
 from cq_editor.widgets.editor import Editor
@@ -1685,7 +1685,7 @@ def test_light_dark_mode(main):
     """
     Tests that the app does switch between light and dark mode.
     """
-    from PyQt5.QtGui import QPalette
+    from PySide6.QtGui import QPalette
 
     qtbot, win = main
 

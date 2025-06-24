@@ -1,8 +1,7 @@
 # 3D视图组件
-from PyQt5.QtWidgets import QWidget, QDialog, QTreeWidgetItem, QApplication, QAction
-
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PySide6.QtWidgets import QWidget, QDialog, QTreeWidgetItem, QApplication
+from PySide6.QtCore import Slot, Signal
+from PySide6.QtGui import QIcon, QAction
 
 from OCP.Graphic3d import (
     Graphic3d_Camera,
@@ -90,7 +89,7 @@ class OCCViewer(QWidget, ComponentMixin):
     )
     IMAGE_EXTENSIONS = "png"
 
-    sigObjectSelected = pyqtSignal(list)
+    sigObjectSelected = Signal(list)
 
     def __init__(self, parent=None):
 
@@ -271,7 +270,7 @@ class OCCViewer(QWidget, ComponentMixin):
 
         # self.canvas._display.Repaint()
 
-    @pyqtSlot(object)
+    @Slot(object)
     def display(self, ais):
 
         context = self._get_context()
@@ -280,8 +279,8 @@ class OCCViewer(QWidget, ComponentMixin):
         if self.preferences["Fit automatically"]:
             self.fit()
 
-    @pyqtSlot(list)
-    @pyqtSlot(list, bool)
+    @Slot(list)
+    @Slot(list, bool)
     def display_many(self, ais_list, fit=None):
         context = self._get_context()
         for ais in ais_list:
@@ -292,7 +291,7 @@ class OCCViewer(QWidget, ComponentMixin):
         elif fit:
             self.fit()
 
-    @pyqtSlot(QTreeWidgetItem, int)
+    @Slot(QTreeWidgetItem, int)
     def update_item(self, item, col):
 
         ctx = self._get_context()
@@ -301,14 +300,14 @@ class OCCViewer(QWidget, ComponentMixin):
         else:
             ctx.Erase(item.ais, True)
 
-    @pyqtSlot(list)
+    @Slot(list)
     def remove_items(self, ais_items):
 
         ctx = self._get_context()
         for ais in ais_items:
             ctx.Erase(ais, True)
 
-    @pyqtSlot()
+    @Slot()
     def redraw(self):
 
         self._get_viewer().Redraw()
@@ -387,8 +386,8 @@ class OCCViewer(QWidget, ComponentMixin):
         viewer = self._get_viewer()
         viewer.DeactivateGrid()
 
-    @pyqtSlot(bool, float)
-    @pyqtSlot(bool)
+    @Slot(bool, float)
+    @Slot(bool)
     def toggle_grid(self, value: bool, dim: float = 10.0):
 
         if value:
@@ -396,7 +395,7 @@ class OCCViewer(QWidget, ComponentMixin):
         else:
             self.hide_grid()
 
-    @pyqtSlot(gp_Ax3)
+    @Slot(gp_Ax3)
     def set_grid_orientation(self, orientation: gp_Ax3):
 
         viewer = self._get_viewer()
@@ -430,12 +429,12 @@ class OCCViewer(QWidget, ComponentMixin):
 
         return self.canvas.context
 
-    @pyqtSlot(list)
+    @Slot(list)
     def handle_selection(self, obj):
 
         self.sigObjectSelected.emit(obj)
 
-    @pyqtSlot(list)
+    @Slot(list)
     def set_selected(self, ais):
 
         ctx = self._get_context()

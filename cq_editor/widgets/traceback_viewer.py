@@ -2,9 +2,9 @@
 from traceback import extract_tb, format_exception_only
 from itertools import dropwhile
 
-from PyQt5.QtWidgets import QWidget, QTreeWidget, QTreeWidgetItem, QAction, QLabel
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QFontMetrics
+from PySide6.QtWidgets import QWidget, QTreeWidget, QTreeWidgetItem, QLabel
+from PySide6.QtCore import Qt, Slot, Signal
+from PySide6.QtGui import QFontMetrics, QAction
 
 from ..mixins import ComponentMixin
 from ..utils import layout
@@ -30,7 +30,7 @@ class TracebackTree(QTreeWidget):
 
 class TracebackPane(QWidget, ComponentMixin):
 
-    sigHighlightLine = pyqtSignal(int)
+    sigHighlightLine = Signal(int)
 
     def __init__(self, parent):
 
@@ -55,7 +55,7 @@ class TracebackPane(QWidget, ComponentMixin):
 
         return elided_text
 
-    @pyqtSlot(object, str)
+    @Slot(object, str)
     def addTraceback(self, exc_info, code):
 
         self.tree.clear()
@@ -102,7 +102,7 @@ class TracebackPane(QWidget, ComponentMixin):
             self.current_exception.setText("")
             self.current_exception.setToolTip("")
 
-    @pyqtSlot(QTreeWidgetItem, QTreeWidgetItem)
+    @Slot(QTreeWidgetItem, QTreeWidgetItem)
     def handleSelection(self, item, *args):
 
         if item:

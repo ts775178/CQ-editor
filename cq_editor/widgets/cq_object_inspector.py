@@ -1,7 +1,7 @@
 # CadQuery对象检查器组件
-from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QAction
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-
+from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
+from PySide6.QtCore import Qt, Slot, Signal
+from PySide6.QtGui import QAction
 from OCP.AIS import AIS_ColoredShape
 from OCP.gp import gp_Ax3
 
@@ -35,10 +35,10 @@ class CQObjectInspector(QTreeWidget, ComponentMixin):
 
     name = "CQ Object Inspector"
 
-    sigRemoveObjects = pyqtSignal(list)
-    sigDisplayObjects = pyqtSignal(list, bool)
-    sigShowPlane = pyqtSignal([bool], [bool, float])
-    sigChangePlane = pyqtSignal(gp_Ax3)
+    sigRemoveObjects = Signal(list)
+    sigDisplayObjects = Signal(list, bool)
+    sigShowPlane = Signal([bool], [bool, float])
+    sigChangePlane = Signal(gp_Ax3)
 
     def __init__(self, parent):
 
@@ -72,7 +72,7 @@ class CQObjectInspector(QTreeWidget, ComponentMixin):
 
         return self._toolbar_actions
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def inspect(self, value):
 
         if value:
@@ -83,7 +83,7 @@ class CQObjectInspector(QTreeWidget, ComponentMixin):
             self.sigRemoveObjects.emit(self.inspected_items)
             self.sigShowPlane.emit(False)
 
-    @pyqtSlot()
+    @Slot()
     def handleSelection(self):
 
         inspected_items = self.inspected_items
@@ -119,7 +119,7 @@ class CQObjectInspector(QTreeWidget, ComponentMixin):
 
         self.sigDisplayObjects.emit(inspected_items, False)
 
-    @pyqtSlot(object)
+    @Slot(object)
     def setObject(self, cq_obj):
 
         self.root.takeChildren()

@@ -2,8 +2,8 @@
 from sys import platform
 
 
-from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, Qt, QEvent
+from PySide6.QtWidgets import QWidget, QApplication
+from PySide6.QtCore import Slot, Signal, Qt, QEvent
 
 import OCP
 
@@ -19,7 +19,7 @@ ZOOM_STEP = 0.9
 
 class OCCTWidget(QWidget):
 
-    sigObjectSelected = pyqtSignal(list)
+    sigObjectSelected = Signal(list)
 
     def __init__(self, parent=None):
 

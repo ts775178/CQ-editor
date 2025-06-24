@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QStackedWidget, QDialog
-from PyQt5.QtCore import pyqtSlot, Qt
+from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QStackedWidget, QDialog
+from PySide6.QtCore import Slot, Qt
 
 from pyqtgraph.parametertree import ParameterTree
 
@@ -84,7 +84,7 @@ class PreferencesWidget(QDialog):
                 elif child.name() == "Light/Dark Theme":
                     child.setLimits(["Light", "Dark"])
 
-    @pyqtSlot(QTreeWidgetItem, QTreeWidgetItem)
+    @Slot(QTreeWidgetItem, QTreeWidgetItem)
     def handleSelection(self, item, *args):
         if item:
             self.stacked.setCurrentWidget(item.widget)

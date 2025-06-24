@@ -2,7 +2,7 @@
 import sys
 import argparse
 
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 NAME = "CQ-editor"
 # 必须先创建一个 QApplication 实例，才能使用窗口控件
@@ -21,8 +21,8 @@ def main():
     win = MainWindow(filename=args.filename if args.filename else None)
     # 显示窗口（PyQt 中必须调用 .show() 才会把窗口绘制出来）。
     win.show()
-    # 运行应用主循环。app.exec_() 启动事件循环（GUI必须的），sys.exit 用于安全退出
-    sys.exit(app.exec_())
+    # 运行应用主循环。app.exec() 启动事件循环（GUI必须的），sys.exit 用于安全退出
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
