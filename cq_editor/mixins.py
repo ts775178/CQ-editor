@@ -122,13 +122,10 @@ class ComponentMixin(object):
 
     @Slot(object, object)
     def updatePreferences(self, *args):
-
         pass
 
-    def saveComponentState(self, store):
-
+    def saveComponentState(self, settings):
         pass
 
-    def restoreComponentState(self, store):
-
+    def restoreComponentState(self, settings):
         pass

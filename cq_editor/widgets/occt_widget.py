@@ -166,7 +166,8 @@ class OCCTWidget(QWidget):
 
         from OCP.WNT import WNT_Window
 
-        return WNT_Window(wid.ascapsule())
+        #return WNT_Window(wid.ascapsule())
+        return WNT_Window(wid)
 
     def _get_window_linux(self, wid):
 
@@ -178,4 +179,5 @@ class OCCTWidget(QWidget):
 
         from OCP.Cocoa import Cocoa_Window
 
-        return Cocoa_Window(wid.ascapsule())
+        # return Cocoa_Window(wid.ascapsule())
+        return Cocoa_Window(wid)

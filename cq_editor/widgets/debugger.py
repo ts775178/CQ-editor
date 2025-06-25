@@ -86,7 +86,8 @@ class LocalsModel(QAbstractTableModel):
             j = index.column()
             return self.frame[i][j]
         else:
-            return QtCore.QVariant()
+            # return QtCore.QVariant()
+            return None
 
 
 class LocalsView(QTableView, ComponentMixin):

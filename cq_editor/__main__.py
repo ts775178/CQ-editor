@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication
 NAME = "CQ-editor"
 # 必须先创建一个 QApplication 实例，才能使用窗口控件
 app = QApplication(sys.argv, applicationName=NAME)
-
+app.setStyle("Fusion")
 from .main_window import MainWindow
 
 
