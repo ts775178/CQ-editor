@@ -58,16 +58,27 @@ class MainMixin(object):
 
         settings = self.settings
 
-        if self.preferences and settings.value("General"):
+        '''if self.preferences and settings.value("General"):
             self.preferences.restoreState(
                 settings.value("General"), removeChildren=False
-            )
+            )'''
+        general_state = settings.value("General")
+        # if self.preferences and general_state is not None:
+        if self.preferences and isinstance(general_state, (bytes, bytearray)):
+            self.preferences.restoreState(general_state, removeChildren=False)
 
+        '''
+        使用下面这段代码替换：
         for comp in (c for c in self.components.values() if c.preferences):
             if settings.value(comp.name):
                 comp.preferences.restoreState(
                     settings.value(comp.name), removeChildren=False
-                )
+                )'''
+        for comp in (c for c in self.components.values() if c.preferences):
+            comp_state = settings.value(comp.name)
+            #if comp_state is not None:
+            if isinstance(comp_state, (bytes, bytearray)):
+                comp.preferences.restoreState(comp_state, removeChildren=False)
 
     def saveComponentState(self):
 

@@ -39,7 +39,10 @@ class QtLogHandler(logging.Handler, logging.StringFormatterHandlerMixin):
         logging.StringFormatterHandlerMixin.__init__(self, log_format_string)
 
         self._qobject = _QtLogHandlerQObject()
-        self._qobject.sigRecordEmit.connect(log_widget.append)
+        # self._qobject.sigRecordEmit.connect(log_widget.append)
+        # print("[DEBUG]", type(self._qobject), type(log_widget))
+        # self._qobject.sigRecordEmit.connect(lambda val: log_widget.append(val))
+        self._qobject.sigRecordEmit.connect(lambda val: log_widget.append_log(val))
 
     def emit(self, record):
         self._qobject.sigRecordEmit.emit(self.format(record) + "\n")
@@ -66,7 +69,7 @@ class LogViewer(QPlainTextEdit, ComponentMixin):
 
         self.handler = QtLogHandler(self)
 
-    def append(self, msg):
+    def append_log(self, msg):
         """Append text to the panel with ANSI escape sequences stipped."""
         self.moveCursor(QtGui.QTextCursor.End)
         self.insertPlainText(strip_escape_sequences(msg))
