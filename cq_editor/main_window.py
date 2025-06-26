@@ -132,8 +132,8 @@ class MainWindow(QMainWindow, MainMixin):
         self.preferences.sigTreeStateChanged.connect(self.preferencesChanged)
 
         # 恢复窗口和偏好设置
-        self.restorePreferences()
-        self.restoreWindow()
+        #self.restorePreferences()
+        #self.restoreWindow()
 
         # 监听文件修改状态
         self.components["editor"].document().modificationChanged.connect(

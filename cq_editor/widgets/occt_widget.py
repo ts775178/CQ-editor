@@ -177,6 +177,8 @@ class OCCTWidget(QWidget):
 
         return Xw_Window(self.display_connection, int(wid))
 
+    """
+    # 这个函数在macOS上无法正常工作，需要使用其他方法，先暂时使用下面那种方法替代，使窗口独立显示
     def _get_window_osx(self, wid):
         import ctypes
         from objc import objc_object
@@ -197,3 +199,8 @@ class OCCTWidget(QWidget):
             return None
 
         return Cocoa_Window(nsview)
+        """
+
+    def _get_window_osx(self, wid):
+        from OCP.Cocoa import Cocoa_Window
+        return Cocoa_Window("OCCTWidget", 100, 100, 800, 600)
