@@ -92,7 +92,9 @@ class MainMixin(object):
         settings = self.settings
 
         for comp in self.components.values():
-            comp.restoreComponentState(settings)
+            #comp.restoreComponentState(settings)
+            if hasattr(comp, "restoreComponentState"):
+                comp.restoreComponentState(settings)
 
 
 class ComponentMixin(object):

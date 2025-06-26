@@ -18,7 +18,7 @@ import cadquery as cq
 # 导入自定义组件
 from .widgets.editor import Editor
 from .widgets.viewer import OCCViewer
-from .widgets.simple_console import SimpleConsole as ConsoleWidget
+from .widgets.console import ConsoleWidget
 from .widgets.object_tree import ObjectTree
 from .widgets.traceback_viewer import TracebackPane
 from .widgets.debugger import Debugger, LocalsView

@@ -4,7 +4,7 @@ from sys import platform
 
 from PySide6.QtWidgets import QWidget, QApplication
 from PySide6.QtCore import Slot, Signal, Qt, QEvent
-
+from objc import lookUpClass
 import OCP
 
 from OCP.Aspect import Aspect_DisplayConnection, Aspect_TypeOfTriedronPosition
@@ -42,6 +42,7 @@ class OCCTWidget(QWidget):
 
         # Trihedorn, lights, etc
         self.prepare_display()
+        self._initialize()
 
     def prepare_display(self):
 
@@ -73,7 +74,8 @@ class OCCTWidget(QWidget):
         self.view.SetZoom(factor)
 
     def mousePressEvent(self, event):
-
+        if not self._initialized:
+            return
         pos = event.pos()
 
         if event.button() == Qt.LeftButton:
@@ -176,8 +178,22 @@ class OCCTWidget(QWidget):
         return Xw_Window(self.display_connection, int(wid))
 
     def _get_window_osx(self, wid):
-
+        import ctypes
+        from objc import objc_object
         from OCP.Cocoa import Cocoa_Window
 
-        # return Cocoa_Window(wid.ascapsule())
-        return Cocoa_Window(wid)
+        '''nsview_ptr = ctypes.c_void_p(int(wid))  # 强转为 void*
+        nsview_obj = objc_object(c_void_p=nsview_ptr)
+
+        return Cocoa_Window(nsview_obj)'''
+        NSView = lookUpClass("NSView")
+
+        nsview_ptr = ctypes.c_void_p(int(wid))
+        nsview = ctypes.cast(nsview_ptr, ctypes.py_object)
+
+        # 强制转换为 NSView
+        if not isinstance(nsview, NSView):
+            print("Cannot cast winId to NSView correctly")
+            return None
+
+        return Cocoa_Window(nsview)
