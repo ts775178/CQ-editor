@@ -95,7 +95,7 @@ class OCCViewer(QWidget, ComponentMixin):
 
         super(OCCViewer, self).__init__(parent)
         ComponentMixin.__init__(self)
-
+        # 下面这句终端报错了
         self.canvas = OCCTWidget()
         self.canvas.sigObjectSelected.connect(self.handle_selection)
 
@@ -282,6 +282,8 @@ class OCCViewer(QWidget, ComponentMixin):
     @Slot(list)
     @Slot(list, bool)
     def display_many(self, ais_list, fit=None):
+        # print("[DEBUG] display_many called:", objects)
+        # print("[DEBUG] display_many called:", ais_list)
         context = self._get_context()
         for ais in ais_list:
             context.Display(ais, True)

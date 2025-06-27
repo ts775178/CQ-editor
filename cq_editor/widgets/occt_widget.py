@@ -42,6 +42,7 @@ class OCCTWidget(QWidget):
 
         # Trihedorn, lights, etc
         self.prepare_display()
+        # 下面这行代码在终端报错
         self._initialize()
 
     def prepare_display(self):
@@ -159,7 +160,7 @@ class OCCTWidget(QWidget):
             "linux": self._get_window_linux,
             "win32": self._get_window_win,
         }
-
+        # 终端显示下面这句有问题
         self.view.SetWindow(wins.get(platform, self._get_window_linux)(self.winId()))
 
         self._initialized = True
@@ -177,14 +178,14 @@ class OCCTWidget(QWidget):
 
         return Xw_Window(self.display_connection, int(wid))
 
-    """
+    
     # 这个函数在macOS上无法正常工作，需要使用其他方法，先暂时使用下面那种方法替代，使窗口独立显示
     def _get_window_osx(self, wid):
         import ctypes
         from objc import objc_object
         from OCP.Cocoa import Cocoa_Window
 
-        '''nsview_ptr = ctypes.c_void_p(int(wid))  # 强转为 void*
+        """'''nsview_ptr = ctypes.c_void_p(int(wid))  # 强转为 void*
         nsview_obj = objc_object(c_void_p=nsview_ptr)
 
         return Cocoa_Window(nsview_obj)'''
@@ -198,9 +199,11 @@ class OCCTWidget(QWidget):
             print("Cannot cast winId to NSView correctly")
             return None
 
-        return Cocoa_Window(nsview)
-        """
+        return Cocoa_Window(nsview)"""
+        # return Cocoa_Window(int(wid))  # 直接传整型窗口ID
+        return Cocoa_Window("OCCTWidget", 100, 100, 800, 600)  # 临时使用独立窗口显示
+        
 
-    def _get_window_osx(self, wid):
+    '''def _get_window_osx(self, wid):
         from OCP.Cocoa import Cocoa_Window
-        return Cocoa_Window("OCCTWidget", 100, 100, 800, 600)
+        return Cocoa_Window("OCCTWidget", 100, 100, 800, 600)'''
