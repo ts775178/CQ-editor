@@ -290,7 +290,7 @@ class MainWindow(QMainWindow, MainMixin):
 
         # 连接标准输出重定向
         PRINT_REDIRECTOR.sigStdoutWrite.connect(
-            lambda text: self.components["log"].append(text)
+            lambda text: self.components["log"].append_log(text)
         )
 
     def prepare_menubar(self):

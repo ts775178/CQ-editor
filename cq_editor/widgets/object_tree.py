@@ -78,6 +78,12 @@ class ObjectTreeItem(QTreeWidgetItem):
         # )
         self.properties.sigTreeStateChanged.connect(self.propertiesChanged)
 
+        def __del__(self):
+            try:
+                self.properties.sigTreeStateChanged.disconnect(self.propertiesChanged)
+            except Exception:
+                pass
+
     def propertiesChanged(self, properties, changed):
 
         changed_prop = changed[0][0]
@@ -338,8 +344,15 @@ class ObjectTree(QWidget, ComponentMixin):
         if objects:
             removed_items_ais = [self.CQ.takeChild(i).ais for i in objects]
         else:
-            removed_items_ais = [ch.ais for ch in self.CQ.takeChildren()]
-
+            # removed_items_ais = [ch.ais for ch in self.CQ.takeChildren()]
+            removed_items_ais = []
+            for ch in self.CQ.takeChildren():
+                if hasattr(ch, "properties"):
+                    try:
+                        ch.properties.sigTreeStateChanged.disconnect()
+                    except Exception:
+                        pass
+                removed_items_ais.append(ch.ais)
         self.sigObjectsRemoved.emit(removed_items_ais)
 
     @Slot(bool)
@@ -399,6 +412,8 @@ class ObjectTree(QWidget, ComponentMixin):
             self._export_STEP_action.setEnabled(True)
             self._clear_current_action.setEnabled(True)
             self.sigCQObjectSelected.emit(item.shape)
+            # self.properties_editor.setParameters(item.properties, showTop=False)
+            self.properties_editor.clear()
             self.properties_editor.setParameters(item.properties, showTop=False)
             self.properties_editor.setEnabled(True)
         elif item is self.CQ and item.childCount() > 0:

@@ -283,15 +283,29 @@ class OCCViewer(QWidget, ComponentMixin):
     @Slot(list, bool)
     def display_many(self, ais_list, fit=None):
         # print("[DEBUG] display_many called:", objects)
-        # print("[DEBUG] display_many called:", ais_list)
+        print("[DEBUG] display_many called:", ais_list)
+        print("[DEBUG] view object:", self.canvas.view)
+        print("[DEBUG] view.IsEmpty():", self.canvas.view.IsEmpty())
         context = self._get_context()
+        # 清除旧内容（不立即刷新）
+        context.EraseAll(True)
+        # 显示新对象
         for ais in ais_list:
-            context.Display(ais, True)
-
+            shape = ais.val() if hasattr(ais, "val") else ais
+            print("[DEBUG] displaying:", type(shape))
+            # ais, *_ = make_AIS(shape)
+            # context.Display(ais, True)
+            context.Display(shape, True)
+        
+        # 自动缩放视图
         if self.preferences["Fit automatically"] and fit is None:
             self.fit()
         elif fit:
             self.fit()
+
+        # 强制刷新视图
+        self.canvas.view.MustBeResized()
+        self.canvas.view.Redraw()
 
     @Slot(QTreeWidgetItem, int)
     def update_item(self, item, col):
