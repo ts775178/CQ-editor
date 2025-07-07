@@ -8,6 +8,7 @@ from OCC.Core.AIS import AIS_Shape
 from PySide6.QtWidgets import QApplication, QMainWindow
 import sys
 
+
 app = QApplication(sys.argv)
 
 win = QMainWindow()

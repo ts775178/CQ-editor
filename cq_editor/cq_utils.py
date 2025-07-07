@@ -4,20 +4,16 @@ from cadquery.occ_impl.assembly import toCAF
 from typing import List, Union
 from importlib import reload
 from types import SimpleNamespace
-
-from OCP.XCAFPrs import XCAFPrs_AISObject
-from OCP.TopoDS import TopoDS_Shape
-from OCP.AIS import AIS_InteractiveObject, AIS_Shape
-from OCP.Quantity import (
-    Quantity_TOC_RGB as TOC_RGB,
-    Quantity_Color,
-    Quantity_NOC_GOLD as GOLD,
-)
-from OCP.Graphic3d import Graphic3d_NOM_JADE, Graphic3d_MaterialAspect
+import OCC
+from OCC.Core.XCAFPrs import XCAFPrs_AISObject
+from OCC.Core.TopoDS import topods, TopoDS_Shape, TopoDS_Compound
+from OCC.Core.AIS import AIS_InteractiveObject, AIS_Shape
+from OCC.Core.Quantity import Quantity_Color, Quantity_NOC_GOLD, Quantity_TOC_RGB
+from OCC.Core.Graphic3d import Graphic3d_NOM_JADE, Graphic3d_MaterialAspect
 
 from PySide6.QtGui import QColor
 
-DEFAULT_FACE_COLOR = Quantity_Color(GOLD)
+DEFAULT_FACE_COLOR = Quantity_Color(Quantity_NOC_GOLD)
 DEFAULT_MATERIAL = Graphic3d_MaterialAspect(Graphic3d_NOM_JADE)
 
 
@@ -37,10 +33,7 @@ def find_cq_objects(results: dict):
     }
 
 
-def to_compound(
-    obj: Union[cq.Workplane, List[cq.Workplane], cq.Shape, List[cq.Shape], cq.Sketch],
-):
-
+def to_compound(obj):
     vals = []
 
     if isinstance(obj, cq.Workplane):
@@ -52,9 +45,10 @@ def to_compound(
             vals.extend(o.vals())
     elif isinstance(obj, list) and isinstance(obj[0], cq.Shape):
         vals.extend(obj)
-    elif isinstance(obj, TopoDS_Shape):
+    elif isinstance(obj, OCC.Core.TopoDS.TopoDS_Shape):  # 这里改成OCC
+        # 如果直接是TopoDS_Shape，转换成cadquery.Shape
         vals.append(cq.Shape.cast(obj))
-    elif isinstance(obj, list) and isinstance(obj[0], TopoDS_Shape):
+    elif isinstance(obj, list) and isinstance(obj[0], OCC.Core.TopoDS.TopoDS_Shape):
         vals.extend(cq.Shape.cast(o) for o in obj)
     elif isinstance(obj, cq.Sketch):
         if obj._faces:
@@ -64,7 +58,11 @@ def to_compound(
     else:
         raise ValueError(f"Invalid type {type(obj)}")
 
-    return cq.Compound.makeCompound(vals)
+    compound = cq.Compound.makeCompound(vals)
+    # 返回cadquery.Shape
+    if compound is None or compound.wrapped is None:
+        raise ValueError("Invalid compound shape")
+    return compound
 
 
 def to_workplane(obj: cq.Shape):
@@ -77,6 +75,8 @@ def to_workplane(obj: cq.Shape):
     return rv
 
 
+from OCC.Core.TopoDS import topods, TopoDS_Shape, TopoDS_Compound
+
 def make_AIS(
     obj: Union[
         cq.Workplane,
@@ -88,21 +88,55 @@ def make_AIS(
     ],
     options={},
 ):
-
     shape = None
 
     if isinstance(obj, cq.Assembly):
+        obj = obj.val()
         label, shape = toCAF(obj)
         ais = XCAFPrs_AISObject(label)
+
     elif isinstance(obj, AIS_InteractiveObject):
         ais = obj
+
     else:
-        shape = to_compound(obj)
-        ais = AIS_Shape(shape.wrapped)
+        try:
+            shape = to_compound(obj)
+        except Exception as e:
+            raise ValueError(f"[make_AIS] Failed to convert to compound: {e}")
 
-    set_material(ais, DEFAULT_MATERIAL)
-    set_color(ais, DEFAULT_FACE_COLOR)
+        if shape is None or shape.wrapped is None:
+            raise ValueError(f"Invalid shape or empty shape: {shape}")
 
+        # 强制类型转换：从 cadquery.Shape 转换为 OCC.Core.TopoDS_Shape
+        base_shape = shape.wrapped
+        # print("[DEBUG] raw base_shape:", type(base_shape))
+
+        # 处理不同类型的TopoDS形状
+        if isinstance(base_shape, TopoDS_Compound):
+            # 对于Compound，直接使用，不需要转换
+            pass
+        elif hasattr(base_shape, 'Shape'):  # 如果已经是AIS对象
+            base_shape = base_shape.Shape()
+        elif not isinstance(base_shape, TopoDS_Shape):
+            # 尝试转换为TopoDS_Shape
+            try:
+                base_shape = topods.Shape(base_shape)
+            except Exception:
+                raise TypeError(f"[make_AIS] Invalid wrapped type: {type(base_shape)}")
+
+        try:
+            ais = AIS_Shape(base_shape)
+        except Exception as e:
+            raise RuntimeError(f"[make_AIS] Failed to create AIS_Shape: {e}")
+
+    # 设置属性
+    try:
+        set_material(ais, DEFAULT_MATERIAL)
+        set_color(ais, DEFAULT_FACE_COLOR)
+    except Exception as e:
+        print("[make_AIS] Warning: Failed to set material or color:", e)
+
+    # 附加选项
     if "alpha" in options:
         set_transparency(ais, options["alpha"])
     if "color" in options:
@@ -142,7 +176,7 @@ def to_occ_color(color) -> Quantity_Color:
         else:
             color = QColor(color)
 
-    return Quantity_Color(color.redF(), color.greenF(), color.blueF(), TOC_RGB)
+    return Quantity_Color(color.redF(), color.greenF(), color.blueF(), Quantity_TOC_RGB)
 
 
 def get_occ_color(obj: Union[AIS_InteractiveObject, Quantity_Color]) -> QColor:

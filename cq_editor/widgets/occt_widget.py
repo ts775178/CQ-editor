@@ -5,16 +5,32 @@ from sys import platform
 from PySide6.QtWidgets import QWidget, QApplication
 from PySide6.QtCore import Slot, Signal, Qt, QEvent
 from objc import lookUpClass
-import OCP
+# import OCC
 
-from OCP.Aspect import Aspect_DisplayConnection, Aspect_TypeOfTriedronPosition
-from OCP.OpenGl import OpenGl_GraphicDriver
-from OCP.V3d import V3d_Viewer
-from OCP.AIS import AIS_InteractiveContext, AIS_DisplayMode
-from OCP.Quantity import Quantity_Color
+from OCC.Core.Aspect import Aspect_DisplayConnection, Aspect_TypeOfTriedronPosition
+# from OCC.Core.OpenGl import OpenGl_GraphicDriver
+from OCC.Core.V3d import V3d_Viewer
+from OCC.Core.AIS import AIS_InteractiveContext, AIS_DisplayMode
+from OCC.Core.Quantity import Quantity_Color
+
+from OCC.Display.backend import load_backend
+load_backend("pyside6")
+from OCC.Display.qtDisplay import qtViewer3d
+
+class MyViewer(qtViewer3d):
+    sigObjectSelected = Signal(list)
+
+    def __init__(self):
+        super().__init__()
+
+    def simulate_selection(self):
+        # 手动调用时触发选择信号（你可以在 moveTo/select 等操作后调用）
+        selected = []  # 假设你用 InteractiveContext 获取到了选中的 shape
+        self.sigObjectSelected.emit(selected)
 
 
-ZOOM_STEP = 0.9
+
+"""ZOOM_STEP = 0.9
 
 
 class OCCTWidget(QWidget):
@@ -167,43 +183,27 @@ class OCCTWidget(QWidget):
 
     def _get_window_win(self, wid):
 
-        from OCP.WNT import WNT_Window
+        from OCC.Core.WNT import WNT_Window
 
         #return WNT_Window(wid.ascapsule())
         return WNT_Window(wid)
 
     def _get_window_linux(self, wid):
 
-        from OCP.Xw import Xw_Window
+        from OCC.Core.Xw import Xw_Window
 
         return Xw_Window(self.display_connection, int(wid))
 
     
     # 这个函数在macOS上无法正常工作，需要使用其他方法，先暂时使用下面那种方法替代，使窗口独立显示
     def _get_window_osx(self, wid):
-        import ctypes
-        from objc import objc_object
-        from OCP.Cocoa import Cocoa_Window
-
-        """'''nsview_ptr = ctypes.c_void_p(int(wid))  # 强转为 void*
-        nsview_obj = objc_object(c_void_p=nsview_ptr)
-
-        return Cocoa_Window(nsview_obj)'''
-        NSView = lookUpClass("NSView")
-
-        nsview_ptr = ctypes.c_void_p(int(wid))
-        nsview = ctypes.cast(nsview_ptr, ctypes.py_object)
-
-        # 强制转换为 NSView
-        if not isinstance(nsview, NSView):
-            print("Cannot cast winId to NSView correctly")
-            return None
-
-        return Cocoa_Window(nsview)"""
-        # return Cocoa_Window(int(wid))  # 直接传整型窗口ID
-        return Cocoa_Window("OCCTWidget", 100, 100, 800, 600)  # 临时使用独立窗口显示
         
+        # from objc import objc_object
+        from OCC.Core.Cocoa import Cocoa_Window
 
-    '''def _get_window_osx(self, wid):
-        from OCP.Cocoa import Cocoa_Window
-        return Cocoa_Window("OCCTWidget", 100, 100, 800, 600)'''
+        # return Cocoa_Window(int(wid))  # 直接传整型窗口ID
+        return Cocoa_Window("OCCTWidget", 100, 100, 800, 600)  # 临时使用独立窗口显示"""
+        
+def create_occt_viewer():
+    return MyViewer()
+

@@ -21,7 +21,7 @@ from PySide6.QtWidgets import QTableView
 from PySide6.QtGui import QAction
 
 from logbook import info
-from path import Path
+from pathlib import Path
 from pyqtgraph.parametertree import Parameter
 from spyder.utils.icon_manager import icon
 from random import randrange as rrr, seed
@@ -217,7 +217,7 @@ class Debugger(QObject, ComponentMixin):
     def _exec(self, code, locals_dict, globals_dict):
 
         with ExitStack() as stack:
-            p = (self.get_current_script_path() or Path("")).absolute().dirname()
+            p = (self.get_current_script_path() or Path("")).absolute().parent
 
             if self.preferences["Add script dir to path"] and p.exists():
                 sys.path.insert(0, p)

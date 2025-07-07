@@ -2,8 +2,8 @@
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PySide6.QtCore import Qt, Slot, Signal
 from PySide6.QtGui import QAction
-from OCP.AIS import AIS_ColoredShape
-from OCP.gp import gp_Ax3
+from OCC.Core.AIS import AIS_ColoredShape
+from OCC.Core.gp import gp_Ax3
 
 from cadquery import Vector
 

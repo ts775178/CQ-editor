@@ -5,7 +5,7 @@ from .simple_code_editor import SimpleCodeEditor
 from PySide6.QtCore import Signal, QFileSystemWatcher, QTimer
 from PySide6.QtWidgets import QFileDialog, QApplication
 from PySide6.QtGui import QFontDatabase, QTextCursor, QAction
-from path import Path
+from pathlib import Path
 import sys
 from pyqtgraph.parametertree import Parameter
 from ..mixins import ComponentMixin

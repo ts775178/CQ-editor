@@ -298,7 +298,7 @@ def test_export(main, mocker):
 
 def number_visible_items(viewer):
 
-    from OCP.AIS import AIS_ListOfInteractive
+    from OCC.Core.AIS import AIS_ListOfInteractive
 
     l = AIS_ListOfInteractive()
 
@@ -1365,13 +1365,13 @@ def test_render_assy(main):
 code_show_ais = """import cadquery as cq
 from cadquery.occ_impl.assembly import toCAF
 
-import OCP
+from OCC.Core.XCAFPrs import XCAFPrs_AISObject
 
 result1 = cq.Workplane("XY" ).box(3, 3, 0.5)
 assy = cq.Assembly(result1)
 
 lab, doc = toCAF(assy)
-ais = OCP.XCAFPrs.XCAFPrs_AISObject(lab)
+ais = OCC.Core.XCAFPrs.XCAFPrs_AISObject(lab)
 
 show_object(ais)
 """

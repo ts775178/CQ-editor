@@ -10,6 +10,13 @@ from ..mixins import ComponentMixin  # 组件混合
 
 from ..icons import icon  # 图标
 
+# 设置日志级别，关闭调试输出
+import logging
+logging.getLogger('ipykernel').setLevel(logging.ERROR)
+logging.getLogger('jupyter_client').setLevel(logging.ERROR)
+logging.getLogger('qtconsole').setLevel(logging.ERROR)
+logging.getLogger('asyncio').setLevel(logging.ERROR)
+
 
 class ConsoleWidget(RichJupyterWidget, ComponentMixin):  
 

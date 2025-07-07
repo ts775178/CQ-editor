@@ -1,5 +1,5 @@
 from sys import platform
-from path import Path
+from pathlib import Path
 from os import system
 from shutil import make_archive
 from cq_editor import __version__ as version

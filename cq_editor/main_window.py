@@ -1,5 +1,14 @@
 # 负责GUI构造和交互界面
 import sys
+import logging
+
+# 配置日志，关闭所有调试输出
+logging.basicConfig(level=logging.ERROR)
+logging.getLogger().setLevel(logging.ERROR)
+
+# 关闭特定模块的调试输出
+for logger_name in ['ipykernel', 'jupyter_client', 'qtconsole', 'asyncio', 'tornado', 'zmq']:
+    logging.getLogger(logger_name).setLevel(logging.ERROR)
 
 # from PySide6.QtCore import QObject, Signalfrom PySide6.QtGui import QPalette, QColor
 from PySide6.QtCore import QObject, Signal
@@ -114,7 +123,8 @@ class MainWindow(QMainWindow, MainMixin):
 
         # 中央区域，创建3D视图作为中央窗口
         self.viewer = OCCViewer(self)
-        self.setCentralWidget(self.viewer.canvas)
+        # self.setCentralWidget(self.viewer.canvas)
+        self.setCentralWidget(self.viewer)
 
         # 初始化各个组件
         self.prepare_panes()        # 面板注册，注册多个 Dock 面板并设置默认显示位置

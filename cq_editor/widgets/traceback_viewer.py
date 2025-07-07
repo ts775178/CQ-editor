@@ -40,7 +40,7 @@ class TracebackPane(QWidget, ComponentMixin):
         self.current_exception = QLabel(self)
         self.current_exception.setStyleSheet("QLabel {color : red; }")
 
-        layout(self, (self.current_exception, self.tree), self)
+        layout(self, (self.current_exception, self.tree))
 
         self.tree.currentItemChanged.connect(self.handleSelection)
 

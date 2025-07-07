@@ -1,41 +1,37 @@
-# 3D视图组件
-from PySide6.QtWidgets import QWidget, QDialog, QTreeWidgetItem, QApplication
-from PySide6.QtCore import Slot, Signal
-from PySide6.QtGui import QIcon, QAction
-
-from OCP.Graphic3d import (
+from OCC.Display.backend import load_backend
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QIcon
+from OCC.Core.Graphic3d import (
+    Graphic3d_MaterialAspect,
+    Graphic3d_NameOfMaterial,
     Graphic3d_Camera,
     Graphic3d_StereoMode,
-    Graphic3d_NOM_JADE,
-    Graphic3d_MaterialAspect,
 )
-from OCP.AIS import AIS_Shaded, AIS_WireFrame, AIS_ColoredShape, AIS_Axis
-from OCP.Aspect import Aspect_GDM_Lines, Aspect_GT_Rectangular
-from OCP.Quantity import (
-    Quantity_NOC_BLACK as BLACK,
-    Quantity_TOC_RGB as TOC_RGB,
-    Quantity_Color,
-)
-from OCP.Geom import Geom_Axis1Placement
-from OCP.gp import gp_Ax3, gp_Dir, gp_Pnt, gp_Ax1
-
+from OCC.Core.Quantity import Quantity_Color
+from OCC.Core.Quantity import Quantity_NOC_BLACK, Quantity_TOC_RGB
+from OCC.Core.Aspect import Aspect_GDM_Lines, Aspect_GT_Rectangular
+from OCC.Core.AIS import AIS_Shaded, AIS_WireFrame, AIS_ColoredShape, AIS_Axis, AIS_InteractiveObject, AIS_Shape
+from OCC.Core.Geom import Geom_Axis1Placement
+from OCC.Core.gp import gp_Ax3, gp_Dir, gp_Pnt, gp_Ax1
+from ..cq_utils import to_occ_color, make_AIS
 from ..utils import layout, get_save_filename
-from ..mixins import ComponentMixin
 from ..icons import icon
-from ..cq_utils import to_occ_color, make_AIS, DEFAULT_FACE_COLOR
-
-from .occt_widget import OCCTWidget
-
+load_backend("pyside6")
+from OCC.Display.qtDisplay import qtViewer3d
+from ..mixins import ComponentMixin
+from PySide6.QtCore import Slot, Signal
+from PySide6.QtWidgets import QTreeWidgetItem
 from pyqtgraph.parametertree import Parameter
+from PySide6.QtGui import QAction
 import qtawesome as qta
 
 
+BLACK = Quantity_NOC_BLACK
 DEFAULT_EDGE_COLOR = Quantity_Color(BLACK)
 DEFAULT_EDGE_WIDTH = 2
+DEFAULT_FACE_COLOR = (0.5, 0.5, 0.5)
 
-
-class OCCViewer(QWidget, ComponentMixin):
-
+class OCCViewer(qtViewer3d, ComponentMixin):
     name = "3D Viewer"
 
     preferences = Parameter.create(
@@ -92,38 +88,44 @@ class OCCViewer(QWidget, ComponentMixin):
     sigObjectSelected = Signal(list)
 
     def __init__(self, parent=None):
-
-        super(OCCViewer, self).__init__(parent)
+        super().__init__(parent)
         ComponentMixin.__init__(self)
-        # 下面这句终端报错了
-        self.canvas = OCCTWidget()
-        self.canvas.sigObjectSelected.connect(self.handle_selection)
-
+        # 1. 先设置 canvas，兼容旧逻辑
+        self.canvas = self
+        # 2. 初始化 OCCT 显示接口（必须在用 context/viewer/view 之前做）
+        self.context = self._display.Context
+        self.view = self._display.View
+        self.viewer = self._display.Viewer
+        # 3、创建toolbar  action、布局等
         self.create_actions(self)
-
-        self.layout_ = layout(
-            self,
-            [
-                self.canvas,
-            ],
-            top_widget=self,
-            margin=0,
-        )
-
+        # self.layout_ = layout(self, [self], top_widget=self, margin=0)
+        # 4、初始化默认显示参数（必须在context初始化之后）
         self.setup_default_drawer()
         self.updatePreferences()
+        self.displayed_shapes = []
+        self.displayed_ais = []
+        
+
+        # self._display.create_windows()
+        
+        
 
     def setup_default_drawer(self):
 
         # set the default color and material
-        material = Graphic3d_MaterialAspect(Graphic3d_NOM_JADE)
+        # material = Graphic3d_MaterialAspect(Graphic3d_NOM_JADE)
 
-        shading_aspect = self.canvas.context.DefaultDrawer().ShadingAspect()
+        shading_aspect = self.context.DefaultDrawer().ShadingAspect()
+        # shading_aspect.SetMaterial(Graphic3d_NOM_JADE)
+        material = Graphic3d_MaterialAspect(Graphic3d_NameOfMaterial.Graphic3d_NOM_JADE)
         shading_aspect.SetMaterial(material)
-        shading_aspect.SetColor(DEFAULT_FACE_COLOR)
+        #shading_aspect.SetColor(DEFAULT_FACE_COLOR)
+
+        material = Graphic3d_MaterialAspect(Graphic3d_NameOfMaterial.Graphic3d_NOM_JADE)
+        shading_aspect.SetMaterial(material)
 
         # face edge lw
-        line_aspect = self.canvas.context.DefaultDrawer().FaceBoundaryAspect()
+        line_aspect = self.context.DefaultDrawer().FaceBoundaryAspect()
         line_aspect.SetWidth(DEFAULT_EDGE_WIDTH)
         line_aspect.SetColor(DEFAULT_EDGE_COLOR)
 
@@ -134,11 +136,13 @@ class OCCViewer(QWidget, ComponentMixin):
 
         if not self.preferences["Use gradient"]:
             color2 = color1
-        self.canvas.view.SetBgGradientColors(color1, color2, theToUpdate=True)
+        print("[DEBUG] color1:", color1, type(color1))
+        print("[DEBUG] color2:", color2, type(color2))
+        self.view.SetBgGradientColors(color1, color2)
 
-        self.canvas.update()
+        self.update()
 
-        ctx = self.canvas.context
+        ctx = self.context
         ctx.SetDeviationCoefficient(self.preferences["Deviation"])
         ctx.SetDeviationAngle(self.preferences["Angular deviation"])
 
@@ -161,13 +165,12 @@ class OCCViewer(QWidget, ComponentMixin):
             f"Graphic3d_StereoMode_{stereo_mode}",
             Graphic3d_StereoMode.Graphic3d_StereoMode_QuadBuffer,
         )
-
     def create_actions(self, parent):
 
         self._actions = {
             "View": [
                 QAction(
-                    qta.icon("fa.arrows-alt"),
+                    qta.icon("fa5s.arrows-alt"),
                     "Fit (Shift+F1)",
                     parent,
                     shortcut="shift+F1",
@@ -223,14 +226,14 @@ class OCCViewer(QWidget, ComponentMixin):
                     triggered=self.right_view,
                 ),
                 QAction(
-                    qta.icon("fa.square-o"),
+                    qta.icon("fa5s.square"),
                     "Wireframe (Shift+F9)",
                     parent,
                     shortcut="shift+F9",
                     triggered=self.wireframe_view,
                 ),
                 QAction(
-                    qta.icon("fa.square"),
+                    qta.icon("fa5s.square"),
                     "Shaded (Shift+F10)",
                     parent,
                     shortcut="shift+F10",
@@ -248,22 +251,22 @@ class OCCViewer(QWidget, ComponentMixin):
         }
 
     def toolbarActions(self):
-
         return self._actions["View"]
-
+    
     def clear(self):
 
         self.displayed_shapes = []
         self.displayed_ais = []
-        self.canvas.context.EraseAll(True)
+        self.context.EraseAll(True)
         context = self._get_context()
         context.PurgeDisplay()
         context.RemoveAll(True)
 
     def _display(self, shape):
 
-        ais = make_AIS(shape)
-        self.canvas.context.Display(shape, True)
+        ais, _ = make_AIS(shape)
+        # self.context.Display(shape, True)
+        self.context.Display(ais, True)
 
         self.displayed_shapes.append(shape)
         self.displayed_ais.append(ais)
@@ -282,30 +285,50 @@ class OCCViewer(QWidget, ComponentMixin):
     @Slot(list)
     @Slot(list, bool)
     def display_many(self, ais_list, fit=None):
-        # print("[DEBUG] display_many called:", objects)
-        print("[DEBUG] display_many called:", ais_list)
-        print("[DEBUG] view object:", self.canvas.view)
-        print("[DEBUG] view.IsEmpty():", self.canvas.view.IsEmpty())
+        print("[DEBUG] Received in display_many:", ais_list)
+        print("[DEBUG] ais_list type:", type(ais_list))
+        print("[DEBUG] ais_list length:", len(ais_list) if ais_list else 0)
+        print("[DEBUG] view object:", self.view)
+        print("[DEBUG] view.IsEmpty():", self.view.IsEmpty())
+        
+        if not ais_list:
+            print("[DEBUG] ais_list is empty, nothing to display")
+            return
+            
         context = self._get_context()
         # 清除旧内容（不立即刷新）
         context.EraseAll(True)
+        
         # 显示新对象
-        for ais in ais_list:
-            shape = ais.val() if hasattr(ais, "val") else ais
-            print("[DEBUG] displaying:", type(shape))
-            # ais, *_ = make_AIS(shape)
-            # context.Display(ais, True)
-            context.Display(shape, True)
+        for i, ais in enumerate(ais_list):
+            print(f"[DEBUG] Processing ais {i}:", type(ais))
+            try:
+                if isinstance(ais, AIS_InteractiveObject):
+                    print(f"[DEBUG] Displaying AIS_InteractiveObject {i}")
+                    context.Display(ais, True)
+                else:
+                    print(f"[DEBUG] Creating AIS for object {i}")
+                    ais_obj, _ = make_AIS(ais)
+                    print(f"[DEBUG] Created AIS object {i}:", type(ais_obj))
+                    context.Display(ais_obj, True)
+            except Exception as e:
+                print(f"[DEBUG] Error displaying object {i}:", e)
+                import traceback
+                traceback.print_exc()
+        
+        # 强制刷新视图
+        self.view.Redraw()
+        self.view.Update()
         
         # 自动缩放视图
         if self.preferences["Fit automatically"] and fit is None:
+            print("[DEBUG] Auto-fitting view")
             self.fit()
         elif fit:
+            print("[DEBUG] Manual fitting view")
             self.fit()
-
-        # 强制刷新视图
-        self.canvas.view.MustBeResized()
-        self.canvas.view.Redraw()
+        
+        print("[DEBUG] display_many completed")
 
     @Slot(QTreeWidgetItem, int)
     def update_item(self, item, col):
@@ -329,8 +352,7 @@ class OCCViewer(QWidget, ComponentMixin):
         self._get_viewer().Redraw()
 
     def fit(self):
-
-        self.canvas.view.FitAll()
+        self.view.FitAll()
 
     def iso_view(self):
 
@@ -394,7 +416,7 @@ class OCCViewer(QWidget, ComponentMixin):
         viewer.SetRectangularGridValues(0, 0, step, step, 0)
         grid = viewer.Grid()
         grid.SetColors(
-            Quantity_Color(*color1, TOC_RGB), Quantity_Color(*color2, TOC_RGB)
+            Quantity_Color(*color1, Quantity_TOC_RGB), Quantity_Color(*color2, Quantity_TOC_RGB)
         )
 
     def hide_grid(self):
@@ -417,11 +439,13 @@ class OCCViewer(QWidget, ComponentMixin):
         viewer = self._get_viewer()
         viewer.SetPrivilegedPlane(orientation)
 
-    def show_axis(self, origin=(0, 0, 0), direction=(0, 0, 1)):
-
+    def show_axis(self, origin=(0, 0, 0)):
+        direction=[(1,0,0), (0,1,0), (0,0,1)]
         ax_placement = Geom_Axis1Placement(gp_Ax1(gp_Pnt(*origin), gp_Dir(*direction)))
         ax = AIS_Axis(ax_placement)
         self._display_ais(ax)
+        '''for dir in directions:
+            self._display_ais(AIS_Axis(Geom_Axis1Placement(gp_Ax1(gp_Pnt(*origin), gp_Dir(*dir)))))'''
 
     def save_screenshot(self):
 
@@ -435,15 +459,15 @@ class OCCViewer(QWidget, ComponentMixin):
 
     def _get_view(self):
 
-        return self.canvas.view
+        return self.view
 
     def _get_viewer(self):
 
-        return self.canvas.viewer
+        return self.viewer
 
     def _get_context(self):
 
-        return self.canvas.context
+        return self.context
 
     @Slot(list)
     def handle_selection(self, obj):
@@ -461,24 +485,4 @@ class OCCViewer(QWidget, ComponentMixin):
 
         self.redraw()
 
-
-if __name__ == "__main__":
-
-    import sys
-    from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
-
-    app = QApplication(sys.argv)
-    viewer = OCCViewer()
-
-    dlg = QDialog()
-    dlg.setFixedHeight(400)
-    dlg.setFixedWidth(600)
-
-    layout(dlg, (viewer,), dlg)
-    dlg.show()
-
-    box = BRepPrimAPI_MakeBox(20, 20, 30)
-    box_ais = AIS_ColoredShape(box.Shape())
-    viewer.display(box_ais)
-
-    sys.exit(app.exec_())
+__all__ = ["OCCViewer"]

@@ -1,6 +1,26 @@
 # __main__.py负责程序主逻辑
 import sys
 import argparse
+import os
+
+# 设置环境变量来关闭VTK和OCCT的调试输出
+os.environ["VTK_VERBOSE"] = "0"
+os.environ["OCC_VERBOSE"] = "0"
+os.environ["CSF_DEBUG"] = "0"
+
+# 关闭VTK的重复库警告
+os.environ["VTK_IGNORE_DUPLICATE_LIBRARIES"] = "1"
+
+# 关闭IPython和Jupyter的调试输出
+os.environ["IPYTHONDIR"] = ""
+os.environ["JUPYTER_CONFIG_DIR"] = ""
+os.environ["JUPYTER_DATA_DIR"] = ""
+
+# 关闭asyncio的调试输出
+os.environ["PYTHONASYNCIODEBUG"] = "0"
+
+# 设置日志级别为ERROR，只显示错误信息
+os.environ["LOG_LEVEL"] = "ERROR"
 
 from PySide6.QtWidgets import QApplication
 

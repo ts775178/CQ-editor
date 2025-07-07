@@ -10,9 +10,10 @@ from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt, Slot, Signal
 from pyqtgraph.parametertree import Parameter, ParameterTree
 
-from OCP.AIS import AIS_Line
-from OCP.Geom import Geom_Line
-from OCP.gp import gp_Dir, gp_Pnt, gp_Ax1
+from OCC.Core.AIS import AIS_Line
+from OCC.Core.Geom import Geom_Line
+from OCC.Core.gp import gp_Dir, gp_Pnt, gp_Ax1
+from OCC.Core.Quantity import Quantity_Color
 
 from ..mixins import ComponentMixin
 from ..icons import icon
@@ -24,7 +25,8 @@ from ..cq_utils import (
     get_occ_color,
     set_color,
 )
-from .viewer import DEFAULT_FACE_COLOR
+# from .viewer import DEFAULT_FACE_COLOR
+from ..cq_utils import DEFAULT_FACE_COLOR
 from ..utils import splitter, layout, get_save_filename
 
 
@@ -220,7 +222,7 @@ class ObjectTree(QWidget, ComponentMixin):
             stretch_factors=(2, 1),
             orientation=Qt.Vertical,
         )
-        layout(self, (self._splitter,), top_widget=self)
+        layout(self, (self._splitter,))
 
         self._splitter.show()
 
@@ -248,7 +250,10 @@ class ObjectTree(QWidget, ComponentMixin):
         ):
             line_placement = Geom_Line(gp_Ax1(gp_Pnt(*origin), gp_Dir(*direction)))
             line = AIS_Line(line_placement)
-            line.SetColor(to_occ_color(color))
+            qcolor = to_occ_color(color)
+            print("[DEBUG] to_occ_color returned:", qcolor, type(qcolor))
+            assert isinstance(qcolor, Quantity_Color), "不是 Quantity_Color 实例"
+            line.SetColor(qcolor)
 
             self.Helpers.addChild(ObjectTreeItem(name, ais=line))
 
@@ -292,6 +297,8 @@ class ObjectTree(QWidget, ComponentMixin):
         objects_f = {k: v for k, v in objects.items() if not is_obj_empty(v.shape)}
 
         for name, obj in objects_f.items():
+            print("[DEBUG] obj.shape:", obj.shape)
+            print("[DEBUG] type(obj.shape):", type(obj.shape))
             ais, shape_display = make_AIS(obj.shape, obj.options)
 
             child = ObjectTreeItem(

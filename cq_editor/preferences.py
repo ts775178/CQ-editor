@@ -37,7 +37,7 @@ class PreferencesWidget(QDialog):
             self.add(v.name, v)
 
         self.splitter = splitter((self.preferences_tree, self.stacked), (2, 5))
-        layout(self, (self.splitter,), self)
+        layout(self, (self.splitter,))
 
         self.preferences_tree.currentItemChanged.connect(self.handleSelection)
 
