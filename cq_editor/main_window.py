@@ -10,7 +10,6 @@ logging.getLogger().setLevel(logging.ERROR)
 for logger_name in ['ipykernel', 'jupyter_client', 'qtconsole', 'asyncio', 'tornado', 'zmq']:
     logging.getLogger(logger_name).setLevel(logging.ERROR)
 
-# from PySide6.QtCore import QObject, Signalfrom PySide6.QtGui import QPalette, QColor
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QPalette, QColor, QAction
 from PySide6.QtWidgets import (

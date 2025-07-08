@@ -109,20 +109,12 @@ def make_AIS(
 
         # 强制类型转换：从 cadquery.Shape 转换为 OCC.Core.TopoDS_Shape
         base_shape = shape.wrapped
-        # print("[DEBUG] raw base_shape:", type(base_shape))
 
-        # 处理不同类型的TopoDS形状
-        if isinstance(base_shape, TopoDS_Compound):
-            # 对于Compound，直接使用，不需要转换
-            pass
-        elif hasattr(base_shape, 'Shape'):  # 如果已经是AIS对象
-            base_shape = base_shape.Shape()
-        elif not isinstance(base_shape, TopoDS_Shape):
-            # 尝试转换为TopoDS_Shape
-            try:
-                base_shape = topods.Shape(base_shape)
-            except Exception:
-                raise TypeError(f"[make_AIS] Invalid wrapped type: {type(base_shape)}")
+        # 确保 wrapped 是 TopoDS_Shape 类型（处理 OCP 类型兼容性）
+        try:
+            base_shape = cq.Shape.cast(base_shape).wrapped
+        except Exception as e:
+            raise TypeError(f"[make_AIS] Invalid wrapped type after cast: {type(base_shape)}\nError: {e}")
 
         try:
             ais = AIS_Shape(base_shape)
